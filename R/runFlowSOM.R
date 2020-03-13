@@ -1,0 +1,60 @@
+#' @export
+runFlowSOM <- function(
+  sct,
+  k = 30,
+  markers = NULL,
+  som_x = 10,
+  som_y = 10
+){
+
+  if(is.null(markers) == TRUE){
+
+    markers = rownames(sct)
+
+  }
+    # Extract data
+    data = t(assay(sct))
+
+    # Select markers
+    data = data[,markers]
+
+    # create flowset
+    ff = writeToFlowSet(data)
+
+
+    # build igraph object
+    fsom = ReadInput(ff, transform = FALSE, scale = FALSE)
+
+    # run flowsom
+    som = BuildSOM(fsom, colsToUse = markers, xdim = som_x, ydim = som_y)
+
+    # cell codes
+    cell_som_mapping = som$map$mapping[,1]
+    sct@metadata$som_codes = cell_som_mapping
+
+    # extract codes for cc_plus
+    codes = som$map$codes
+
+    plot_outdir = "consensusC_plus_plots"
+
+    # Run consensus clsuter plus
+    clusters = ConsensusClusterPlus(t(codes), maxK = k, reps = 100,
+                               pItem = 0.9, pFeature = 1, title = plot_outdir, plot = "png",
+                               clusterAlg = "hc", innerLinkage = "average", finalLinkage = "average",
+                               distance = "euclidean", seed = 1234)
+
+
+    ## Get cluster ids for each cell
+    code_clustering <- clusters[[k]]$consensusClass
+    flowsom_cc_clustering <- code_clustering[cell_som_mapping]
+
+    identity = factor(flowsom_cc_clustering)
+
+    colName = paste0('flowsom_cc_k',k)
+
+    sct@metadata[,colName] = identity
+
+    return(sct)
+
+
+}
