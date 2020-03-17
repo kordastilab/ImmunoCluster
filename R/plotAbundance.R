@@ -17,7 +17,7 @@ plotAbundance = function(
   xlabAngle = 90,
   xlabhjust = 0.5,
   xlabvjust = 0.5,
-  ylab = 'Expression',
+  ylab = '% of cells',
   ylabAngle = 0,
   ylabhjust = 0.5,
   ylabvjust = 0.5,
@@ -76,6 +76,8 @@ plotAbundance = function(
   plotobj$cluster <- factor(plotobj$cluster)
   plotobj$sample_id = gsub("X", "", plotobj$sample_id)
 
+  if(is.null(feature) == FALSE){ # No contrast
+
   # Summarize sampleID to metadata feature
   feature.summary = data.frame(Grouping = sct@metadata[,group], feat = sct@metadata[,feature]) %>%
     distinct()
@@ -113,6 +115,39 @@ plotAbundance = function(
                  size = 1) +
       theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
+
+  }
+
+  }
+  else{
+
+    if(graph_type == 'bar'){
+
+      # Plot group individual bars but do stacked
+      # Currently not stacked
+      ggplot(plotobj, aes(x = sample_id, y = proportion, fill = cluster)) + th +
+
+        guides(
+          fill = guide_legend(),
+          shape = guide_legend(),
+          alpha = FALSE) +
+
+        geom_bar(stat = "identity") +
+        theme_classic() +
+        theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+
+    }
+    else {
+
+      ggplot(plotobj, aes(x = cluster, y = proportion)) + th +
+        geom_boxplot() +
+        geom_point(aes(color = cluster),alpha = 0.8,
+                   size = 1) +
+        theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+
+    }
 
   }
 

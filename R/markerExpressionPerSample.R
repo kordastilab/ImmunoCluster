@@ -144,9 +144,50 @@ markerExpressionPerSample <- function(
 
     }
     else{
-      # gg_hue function
-      message("---- Fuck!!!")
-      return()
+
+      # initialise the plot object
+      plot <- ggplot(plotobj, aes(x = antigen, y = median_expression)) + th +
+
+        guides(
+          fill = guide_legend(),
+          shape = guide_legend(),
+          alpha = FALSE)
+
+      plot <- plot + geom_boxplot(
+        position = position_dodge(),
+        alpha = 0.5,
+        outlier.color = NA) +
+        geom_point(alpha = 0.8, position = position_jitterdodge(),
+                   size = 0.7)
+
+      if (yfixed == TRUE) {
+        plot <- plot + facet_wrap( ~ Cluster, nrow = nrow, ncol = ncol)
+      } else {
+        plot <- plot + facet_wrap( ~ Cluster, nrow = nrow, ncol = ncol,
+                                   scales = 'free_y')
+      }
+
+      # add elements to the plot for xy labeling and axis limits
+      plot <- plot + xlab(xlab) + ylab(ylab)
+      if (!is.null(xlim)) {
+        plot <- plot + xlim(xlim[1], xlim[2])
+      }
+      if (!is.null(ylim)) {
+        plot <- plot + ylim(ylim[1], ylim[2])
+      }
+
+      # add elements to the plot for title, subtitle, caption
+      plot <- plot + labs(title = title,
+                          subtitle = subtitle, caption = caption)
+
+      # border around plot
+      plot <- plot +
+        theme(panel.border = element_rect(
+          colour = borderColour,
+          fill = NA,
+          size = borderWidth))
+
+      return(plot)
 
     }
 
