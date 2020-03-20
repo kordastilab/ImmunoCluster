@@ -37,22 +37,33 @@ runFlowSOM <- function(
 
     plot_outdir = "consensusC_plus_plots"
 
+    pdf(NULL)
     # Run consensus clsuter plus
     clusters = ConsensusClusterPlus(t(codes), maxK = k, reps = 100,
                                pItem = 0.9, pFeature = 1, title = plot_outdir, plot = "png",
                                clusterAlg = "hc", innerLinkage = "average", finalLinkage = "average",
                                distance = "euclidean", seed = 1234)
+     dev.off()
 
 
-    ## Get cluster ids for each cell
-    code_clustering <- clusters[[k]]$consensusClass
-    flowsom_cc_clustering <- code_clustering[cell_som_mapping]
+    # Create map metaclustering
+    for(i in 2:k){
 
-    identity = factor(flowsom_cc_clustering)
+      ## Get cluster ids for each cell for each cluster
+      code_clustering <- clusters[[i]]$consensusClass
+      flowsom_cc_clustering <- code_clustering[cell_som_mapping]
 
-    colName = paste0('flowsom_cc_k',k)
+      identity = factor(flowsom_cc_clustering)
 
-    sct@metadata[,colName] = identity
+      colName = paste0('flowsom_cc_k',i)
+
+      sct@metadata[,colName] = identity
+
+    }
+
+    dlta = plot_delta_elbow(clusters)
+
+    print(dlta)
 
     return(sct)
 
