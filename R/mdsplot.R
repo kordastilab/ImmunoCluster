@@ -2,9 +2,77 @@
 mdsplot <- function(
   data,
   grouping = 'group',
-  feature = NULL
+  feature = NULL,
+  colkey = NULL,
+  legendPosition = 'right',
+  legendLabSize = 12,
+  legendIconSize = 5.0,
+  xlim = NULL,
+  ylim = NULL,
+  celllab = NULL,
+  labSize = 3.0,
+  labhjust = 1.5,
+  labvjust = 0,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = 'black',
+  xlab = dimColnames[1],
+  xlabAngle = 0,
+  xlabhjust = 0.5,
+  xlabvjust = 0.5,
+  ylab = dimColnames[2],
+  ylabAngle = 0,
+  ylabhjust = 0.5,
+  ylabvjust = 0.5,
+  axisLabSize = 16,
+  title = 'Metadata plot',
+  subtitle = '',
+  caption = 'MDS Plot',
+  titleLabSize = 16,
+  subtitleLabSize = 12,
+  captionLabSize = 12,
+  hline = NULL,
+  hlineType = 'longdash',
+  hlineCol = 'black',
+  hlineWidth = 0.4,
+  vline = NULL,
+  vlineType = 'longdash',
+  vlineCol = 'black',
+  vlineWidth = 0.4,
+  gridlines.major = TRUE,
+  gridlines.minor = TRUE,
+  borderWidth = 0.8,
+  borderColour = 'black'
   )
   {
+
+
+  # create a base theme that will later be modified
+  th <- theme_bw(base_size=24) +
+
+    theme(
+      legend.background=element_rect(),
+
+      plot.title=element_text(angle=0, size=titleLabSize,
+                              face='bold', vjust=1),
+      plot.subtitle=element_text(angle = 0, size = subtitleLabSize,
+                                 face = 'plain', vjust = 1),
+      plot.caption=element_text(angle = 0, size = captionLabSize,
+                                face = 'plain', vjust = 1),
+
+      axis.text.x=element_text(angle = xlabAngle, size = axisLabSize,
+                               hjust = xlabhjust, vjust = xlabvjust),
+      axis.text.y=element_text(angle = ylabAngle, size = axisLabSize,
+                               hjust = ylabhjust, vjust = ylabvjust),
+      axis.title=element_text(size=axisLabSize),
+
+      legend.position=legendPosition,
+      legend.key=element_blank(),
+      legend.key.size=unit(0.5, 'cm'),
+      legend.text=element_text(size=legendLabSize),
+
+      title=element_text(size=legendLabSize),
+      legend.title=element_blank())
 
   # Get the median marker expression per sample without normalization
   # add marker selection later
@@ -32,9 +100,14 @@ mdsplot <- function(
 
     # Plot
     mds = ggplot(mdsdf, aes_string(x = "MDS1", y = "MDS2", color = feature)) +
-    geom_point(size = 2, alpha = 0.8) +
-    geom_label_repel(aes(label = sample_id)) +
-    theme_classic()
+    geom_point(size = 2, alpha = 0.8) + th +
+    geom_label_repel(aes(label = sample_id))
+
+    # sort out custom colour pairing,
+    if (!is.null(colkey)) {
+      mds <- mds + scale_colour_discrete('') +
+        scale_color_manual(values = colkey)
+    }
 
 
     return(mds)
@@ -43,9 +116,8 @@ mdsplot <- function(
 
     # Plot
     mds = ggplot(mdsdf, aes(x = MDS1, y = MDS2)) +
-        geom_point(size = 2, alpha = 0.8) +
-        geom_label_repel(aes(label = sample_id)) +
-        theme_classic()
+        geom_point(size = 2, alpha = 0.8) + th +
+        geom_label_repel(aes(label = sample_id))
 
     return(mds)
 
