@@ -27,7 +27,7 @@ markerExpressionPerSample <- function(
   ylabvjust = 0.5,
   axisLabSize = 16,
   stripLabSize = 16,
-  title = 'Marker expression per cluster',
+  title = 'Marker expression per sample',
   subtitle = '',
   caption = '',
   titleLabSize = 16,

@@ -6,6 +6,7 @@ plotAbundance = function(
   clusters = unique(metadata(indata)[['cell_annotation']]),
   clusterAssign = 'cell_annotation',
   feature = 'condition',
+  colkey = NULL,
   legendPosition = 'right',
   legendLabSize = 12,
   legendIconSize = 5.0,
@@ -92,7 +93,7 @@ plotAbundance = function(
 
     # Plot group individual bars but do stacked
     # Currently not stacked
-    ggplot(plotobj, aes(x = sample_id, y = proportion, fill = cluster)) + th +
+    plot = ggplot(plotobj, aes(x = sample_id, y = proportion, fill = cluster)) + th +
 
       guides(
         fill = guide_legend(),
@@ -104,17 +105,30 @@ plotAbundance = function(
       theme_classic() +
       theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
+    # sort out custom colour pairing,
+    if (!is.null(colkey)) {
+       plot <- plot + scale_colour_discrete('') +
+        scale_fill_manual(values = colkey)
+    }
+
 
   }
 
   else{
 
-    ggplot(plotobj, aes(x = cluster, y = proportion, fill = condition)) + th +
+    plot = ggplot(plotobj, aes(x = cluster, y = proportion, fill = condition)) + th +
       geom_boxplot() +
       geom_point(aes(color = condition), alpha = 0.8, position = position_jitterdodge(),
                  size = 1) +
-      theme(axis.text.x = element_text(angle = 90, hjust = 1))
+      theme(axis.text.x = element_text(angle = 90, hjust = 1)) + xlab(xlab) + ylab(ylab)
 
+    # sort out custom colour pairing,
+    if (!is.null(colkey)) {
+      plot <- plot + scale_colour_manual(values = colkey) +
+        scale_fill_manual(values = colkey)
+    }
+
+    plot
 
   }
 
