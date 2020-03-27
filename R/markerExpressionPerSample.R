@@ -7,7 +7,7 @@ markerExpressionPerSample <- function(
   feature = 'condition', # The contrast
   clusterAssign = 'cell_annotation', # The clustering
   markers = rownames(indata),
-  feature_cols = NULL, # Colors
+  colkey = NULL, # Colors
   ncol = 5,
   nrow = 2,
   legendPosition = 'right',
@@ -57,6 +57,9 @@ markerExpressionPerSample <- function(
                                hjust = ylabhjust, vjust = ylabvjust),
       axis.title = element_text(size = axisLabSize),
 
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+
       legend.title = element_blank(),
       legend.position = legendPosition,
       legend.key = element_blank(),
@@ -98,7 +101,7 @@ markerExpressionPerSample <- function(
 
       # initialise the plot object
       plot <- ggplot(plotobj, aes(x = antigen, y = median_expression,
-                                  color = Feature, fill = Feature)) + th +
+                                   fill = Feature)) + th +
 
         guides(
           fill = guide_legend(),
@@ -107,9 +110,8 @@ markerExpressionPerSample <- function(
 
       plot <- plot + geom_boxplot(
         position = position_dodge(),
-        alpha = 0.5,
         outlier.color = NA) +
-        geom_point(alpha = 0.8, position = position_jitterdodge(),
+        geom_point(aes(color = Feature), alpha = 0.8, position = position_jitterdodge(),
                    size = 0.7)
 
       if (yfixed == TRUE) {
@@ -138,6 +140,12 @@ markerExpressionPerSample <- function(
           colour = borderColour,
           fill = NA,
           size = borderWidth))
+
+      # sort out custom colour pairing,
+      if (!is.null(colkey)) {
+        plot <- plot + scale_colour_manual(values = colkey) +
+          scale_fill_manual(values = colkey)
+      }
 
       return(plot)
 
@@ -153,12 +161,17 @@ markerExpressionPerSample <- function(
           shape = guide_legend(),
           alpha = FALSE)
 
-      plot <- plot + geom_boxplot(
-        position = position_dodge(),
-        alpha = 0.5,
+      plot <- plot + geom_point(alpha = 0.8, position = position_jitterdodge(),
+                                size = 0.7) +
+        geom_boxplot(position = position_dodge(),
         outlier.color = NA) +
-        geom_point(alpha = 0.8, position = position_jitterdodge(),
-                   size = 0.7)
+
+
+      # sort out custom colour pairing,
+      if (!is.null(colkey)) {
+        plot <- plot + scale_colour_manual(values = colkey) +
+          scale_fill_manual(values = colkey)
+      }
 
       if (yfixed == TRUE) {
         plot <- plot + facet_wrap( ~ Cluster, nrow = nrow, ncol = ncol)
@@ -186,6 +199,7 @@ markerExpressionPerSample <- function(
           colour = borderColour,
           fill = NA,
           size = borderWidth))
+
 
       return(plot)
 

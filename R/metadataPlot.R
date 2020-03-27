@@ -45,8 +45,8 @@ metadataPlot <- function(
   vlineType = 'longdash',
   vlineCol = 'black',
   vlineWidth = 0.4,
-  gridlines.major = TRUE,
-  gridlines.minor = TRUE,
+  gridlines.major = FALSE,
+  gridlines.minor = FALSE,
   borderWidth = 0.8,
   borderColour = 'black')
 {
@@ -64,6 +64,7 @@ metadataPlot <- function(
         face = 'plain', vjust = 1),
       plot.caption=element_text(angle = 0, size = captionLabSize,
         face = 'plain', vjust = 1),
+
 
       axis.text.x=element_text(angle = xlabAngle, size = axisLabSize,
         hjust = xlabhjust, vjust = xlabvjust),

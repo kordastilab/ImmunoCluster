@@ -39,10 +39,10 @@ runFlowSOM <- function(
 
     pdf(NULL)
     # Run consensus clsuter plus
-    clusters = ConsensusClusterPlus(t(codes), maxK = k, reps = 100,
+    clusters = suppressMessages(ConsensusClusterPlus(t(codes), maxK = k, reps = 100,
                                pItem = 0.9, pFeature = 1, title = plot_outdir, plot = "png",
                                clusterAlg = "hc", innerLinkage = "average", finalLinkage = "average",
-                               distance = "euclidean", seed = 1234)
+                               distance = "euclidean", seed = 1234))
      dev.off()
 
 

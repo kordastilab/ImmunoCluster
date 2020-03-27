@@ -55,6 +55,9 @@ plotAbundance = function(
                                hjust = ylabhjust, vjust = ylabvjust),
       axis.title = element_text(size = axisLabSize),
 
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+
       legend.title = element_blank(),
       legend.position = legendPosition,
       legend.key = element_blank(),
@@ -103,7 +106,7 @@ plotAbundance = function(
       geom_bar(stat = "identity") +
       facet_wrap(~ condition, scales = "free_x") +
       theme_classic() +
-      theme(axis.text.x = element_text(angle = 90, hjust = 1))
+      theme(axis.text.x = element_text(angle = 90, hjust = 1)) + xlab(xlab) + ylab(ylab)
 
     # sort out custom colour pairing,
     if (!is.null(colkey)) {
@@ -111,6 +114,7 @@ plotAbundance = function(
         scale_fill_manual(values = colkey)
     }
 
+    plot
 
   }
 
@@ -139,7 +143,7 @@ plotAbundance = function(
 
       # Plot group individual bars but do stacked
       # Currently not stacked
-      ggplot(plotobj, aes(x = sample_id, y = proportion, fill = cluster)) + th +
+      plot = ggplot(plotobj, aes(x = sample_id, y = proportion, fill = cluster)) + th +
 
         guides(
           fill = guide_legend(),
@@ -148,17 +152,35 @@ plotAbundance = function(
 
         geom_bar(stat = "identity") +
         theme_classic() +
-        theme(axis.text.x = element_text(angle = 90, hjust = 1))
+        theme(axis.text.x = element_text(angle = 90, hjust = 1)) + xlab(xlab) + ylab(ylab)
+
+      # sort out custom colour pairing,
+      if (!is.null(colkey)) {
+        plot <- plot + scale_colour_discrete('') +
+          scale_fill_manual(values = colkey)
+      }
+
+
+
+      plot
 
 
     }
     else {
 
-      ggplot(plotobj, aes(x = cluster, y = proportion)) + th +
+      plot = ggplot(plotobj, aes(x = cluster, y = proportion)) + th +
         geom_boxplot() +
         geom_point(aes(color = cluster),alpha = 0.8,
                    size = 1) +
-        theme(axis.text.x = element_text(angle = 90, hjust = 1))
+        theme(axis.text.x = element_text(angle = 90, hjust = 1)) + xlab(xlab) + ylab(ylab)
+
+
+      if (!is.null(colkey)) {
+        plot <- plot +
+          scale_color_manual(values = colkey)
+      }
+
+      plot
 
 
     }

@@ -21,25 +21,26 @@ plot_delta_elbow <- function(mc) {
     h$counts <- cumsum(h$counts) / sum(h$counts)
     return(h)
   })
-  
+
   # calculate area under CDF curve, by histogram method &
   # calculate proportional increase relative to prior k
   areaK <- vapply(h, function(x) cumsum(x$counts * .01)[100], numeric(1))
   deltaK <- c(areaK[1], diff(areaK) / areaK[seq_len(maxK-2)])
-  
+
   df <- data.frame(k=seq_len(maxK)[-1], y=deltaK)
   y_max <- ceiling(max(df$y)*2)/2
-  
-  dlta = ggplot(df, aes_string(x="k", y="y")) + 
-    theme_classic() + geom_line(color="steelblue", lty=2) + 
-    geom_point(size=2.5, color="navy") + coord_fixed(4) +
-    scale_x_continuous(breaks=seq(2, 20, 2), expand=c(0,.5)) +
-    scale_y_continuous(limits=c(0, y_max), expand=c(0,.125), 
+
+  dlta = ggplot(df, aes_string(x="k", y="y")) +
+    theme_classic() + geom_line(color="black") +
+    geom_point(size=1, colour = "grey90") +
+    scale_x_continuous(breaks=seq(2, maxK, 2), expand=c(0,.5)) +
+    scale_y_continuous(limits=c(0, y_max), expand=c(0,.125),
                        breaks=function(x) seq(x[1]+.125, x[2], .5)) +
     ylab("Relative change\nin area under CDF curve") +
     theme(plot.title=element_text(face="bold"),
           axis.text=element_text(color="black"),
-          panel.grid.major=element_line(color="grey", size=.2))
- 
-  return(dlta) 
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank())
+
+  return(dlta)
 }

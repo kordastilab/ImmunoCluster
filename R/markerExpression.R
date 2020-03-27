@@ -52,8 +52,8 @@ markerExpression <- function(
   vlineType = 'longdash',
   vlineCol = 'black',
   vlineWidth = 0.4,
-  gridlines.major = TRUE,
-  gridlines.minor = TRUE,
+  gridlines.major = FALSE,
+  gridlines.minor = FALSE,
   borderWidth = 0.8,
   borderColour = 'black')
 {
