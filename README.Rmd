@@ -1,0 +1,23 @@
+---
+title: "immunoCluster"
+author: "James Opzoomer, Kevin Blighe, Jessica Timms"
+date: "`r Sys.Date()`"
+package: "`r packageVersion('immunoCluster')`"
+output:
+  github_document:
+    toc: true
+    toc_depth: 2
+fig_width: 7
+always_allow_html: true
+---
+
+
+# Introduction
+
+```{r, echo = FALSE, message = FALSE}
+  library(knitr)
+  library(kableExtra)
+  opts_chunk$set(tidy = FALSE, message = FALSE, warning = FALSE)
+```
+
+# Installation
