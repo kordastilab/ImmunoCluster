@@ -1,28 +1,57 @@
 Package: immunoCluster
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
-Authors@R: 
-    person(given = "First",
-           family = "Last",
+Title: Immune profiling CyTOF data for the non-specialist
+Version: 0.1.0
+Authors@R: c(
+    person(given = "James",
+           family = "Opzoomer",
            role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-License: What license it uses
+           email = "james.opzoomer@kcl.ac.uk",
+           comment = c(ORCID = "0000-0001-6842-756X")),
+    person(given = "Kevin",
+           family = "Blighe",
+           role = c("aut")),
+    person(given = "Jessica",
+           family = "Timms",
+           role = c("ctb")),
+    person(given = "James",
+           family = "Arnold",
+           role = c("fnd")),
+    person(given = "Shahram",
+           family = "Kordasti",
+           role = c("fnd")))
+Description: The ImmunoCluster package provides a complete toolkit for carry out immune profiling from High-dimensional mass (CyTOF) and flow cytometry. The package features standardized data infrastructure, using the SingleCellExperiment class object, interactive visualization tools and convenient implementations for popular algorithms designed for a non-specialist.
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 biocViews:
+Depends:
+  SingleCellExperiment,
+  ggplot2,
+  ggrepel,
+  dplyr
 Imports: 
   lattice,
   latticeExtra,
   RColorBrewer,
   broom,
-  dplyr,
-  ggplot2,
   limma,
   ggrepel,
   pheatmap,
   umap,
   reshape2,
-  flowCore
+  flowCore,
+  cowplot,
+  RColorBrewer,
+  Biobase,
+  ConsensusClusterPlus,
+  FlowSOM,
+  Rtsne,
+  pheatmap
+Suggests:
+  readxl,
+  stringr,
+  BiocGenerics,
+  knitr,
+  kableExtra
+URL: https://github.com/kordastilab/ImmunoCluster
 RoxygenNote: 7.0.2
