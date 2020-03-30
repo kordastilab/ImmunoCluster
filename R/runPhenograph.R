@@ -2,7 +2,8 @@
 runPhenograph <- function(
   sce,
   k = 30,
-  markers = NULL
+  markers = NULL,
+  set_seed = 4321
 ){
 
   colName = paste0('phenograph_k',k)
@@ -11,6 +12,9 @@ runPhenograph <- function(
   if(is.null(markers) == FALSE){
 
     data = t(assay(sce))
+
+    # Set the seed
+    set.seed(set_seed)
 
     rphenograph_output = Rphenograph(data[,markers], k = k)
 
@@ -22,6 +26,9 @@ runPhenograph <- function(
 
   }
   else{
+
+    # Set the seed
+    set.seed(set_seed)
 
     rphenograph_output <- Rphenograph(t(assay(sce)), k = k)
 

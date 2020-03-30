@@ -4,7 +4,8 @@ runFlowSOM <- function(
   k = 30,
   markers = NULL,
   som_x = 10,
-  som_y = 10
+  som_y = 10,
+  set_seed = 4321
 ){
 
   if(is.null(markers) == TRUE){
@@ -21,9 +22,11 @@ runFlowSOM <- function(
     # create flowset
     ff = writeToFlowSet(data)
 
-
     # build igraph object
     fsom = ReadInput(ff, transform = FALSE, scale = FALSE)
+
+    # Set the seed
+    set.seed(set_seed)
 
     # run flowsom
     som = BuildSOM(fsom, colsToUse = markers, xdim = som_x, ydim = som_y)
