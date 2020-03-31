@@ -96,7 +96,7 @@ medianHeatmap <- function(
 
 
     # Colors for the heatmap
-    color_bar = brewer.pal(n = 9, name = "Greens")
+    color_bar = brewer.pal(n = 9, name = heat_bar)
 
     # execute heatmap
     heatmap = pheatmap(data.median.sample,
