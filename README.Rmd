@@ -40,12 +40,15 @@ Install the development version of the package:
   
   # Install the ImmunoCluster package
   devtools::install_github("kordastilab/ImmunoCluster")
+  
+  # May need to run this line if an R build version error while installing appears
+  # Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS="true")
 ```
 
 ## 2. Load the package and the dependancies into the R session
 
-```{r Load, eval=FALSE}
-  library(immunnoCluster)
+```{r Load, eval=TRUE, results="hide"}
+  library(immunoCluster)
 
   # Load dependencies
   require(flowCore)
@@ -76,34 +79,348 @@ The raw data is available [here](http://flowrepository.org/id/FR-FCM-Z244). We h
 
 ## 2. Import data 
 
-```{r download, eval=FALSE}
-
+```{r download fcs, eval=FALSE}
 # Insert zenodo link
 
 ```
 
-```{r sample setup, eval=FALSE}
+```{r sample setup, eval=TRUE}
+# Insert zenodo RDS link to replace local
+sample_metadata_df = readRDS(file = "../github_readme/rds_objects/sample_metadata.rds")
 
+head(sample_metadata_df)
 ```
 
 
-```{r panel setup, eval=FALSE}
+```{r panel setup, eval=TRUE}
+# Insert zenodo RDS link to replace local
+panel_metadata_df = readRDS(file = "../github_readme/rds_objects/panel_metadata.rds")
+
+head(panel_metadata_df)
+
+# Create marker grouping designations
+clustering_markers = panel_metadata_df$antigen[panel_metadata_df$clustering ==1]
+activation_markers = panel_metadata_df$antigen[panel_metadata_df$activation == 1]
+col_names = panel_metadata_df$antigen[panel_metadata_df$clustering == 1 | panel_metadata_df$activation == 1 ]
+
+# Select columns to dicard from fcs file
+discard = setdiff(panel_metadata_df$antigen, c(clustering_markers, activation_markers))
+queries = str_detect(panel_metadata_df$antigen, paste(discard, collapse = "|"))
+
+if(length(discard) > 0){colsDiscard = panel_metadata_df$metal[queries]
+}else{colsDiscard = ''}
 
 ```
 
 
 ```{r import data, eval=FALSE}
 
+filelist = list.files(
+      path = "../github_readme/fcs_data",
+    pattern = "*.fcs|*.FCS",
+    full.names = TRUE)
+
+metadata = data.frame(
+      file = filelist,
+      group = sample_metadata_df$sample_id,
+      condition = sample_metadata_df$condition,
+      patient_id = sample_metadata_df$patient_id,
+      day_id = sample_metadata_df$day_id,
+      row.names = filelist,
+      stringsAsFactors = FALSE)
+
+# Re-jig the accept discard columns to get a complete limited dataset.
+require(SingleCellExperiment)
+  sce_gvhd = processFCS(
+    files = filelist,
+    metadata = metadata,
+    transformation = TRUE,
+    filter = FALSE,
+    transFun = function (x) asinh(x),
+    downsampleVar = NULL, 
+    downsample = NULL, # Downsample to n cells per downsample_grouping
+    downsample_grouping = NULL, # Downdample to downsample cells by the specified metadata slot
+    newColnames = col_names,
+    colsDiscard = colsDiscard)
+
+sce_gvhd
 ```
 
 Aternately you can download the imported RDS directly to skip the import step and save time:
 
 ```{r download rds, eval=TRUE}
-
 # Insert zenodo RDS link
+sce_gvhd = readRDS(file = "../github_readme/rds_objects/sce_gvhd.rds")
 
+sce_gvhd
 ```
 
+## 2. Data Exploration
+
+```{r mds_plot, fig.width=11, fig.height=3.75, eval=TRUE}
+mds1 = mdsplot(sce_gvhd, 
+               feature = "condition", 
+               colkey = c(None = 'royalblue', GvHD = 'red2'))
+
+mds2 = mdsplot(sce_gvhd, 
+               feature = "day_id", 
+               colkey = c(D30  = 'darkorange1', D90 = 'darkgreen'))
+
+plot_grid(mds1, mds2,
+    labels = c('A','B'),
+    ncol = 2, align = "l", label_size = 20)
+```
+
+```{r sample heatmap, eval=TRUE}
+feature = medianHeatmap(sce_gvhd, grouping = "group", feature = "condition", feature_cols = c('royalblue', 'red2'))
+```
+
+## 3. Dimensionality reduction and clustering
+
+Run the UMAP on selected lineage markers, downampling to 2000 cells per sample. tSNE is also supported.
+```{r run UMAP, message=FALSE, eval=TRUE}
+require(umap)
+# Run UMAP and store in sce object
+sce_gvhd = performUMAP(sce_gvhd, downsample = 1000, useMarkers = clustering_markers)
+
+# Run tSNE and store in sce object
+sce_gvhd = performTSNE(sce_gvhd, downsample = 1000, useMarkers = clustering_markers)
+```
+
+```{r, fig.width=14, fig.height=10, eval=TRUE}
+expression_markers =  c('CD3', 'CD4', 'CD8a', 'CD11b', 'CD19', 'CD56')
+
+exp_plot_umap = markerExpression(sce_gvhd,
+    markers = expression_markers,
+    reducedDim = 'UMAP',
+    title = 'Marker exprssion in UMAP space',
+    nrow = 1, ncol = 6,
+    pointSize = 0.05,
+    legendKeyHeight = 1.0,
+    legendLabSize = 14,
+    stripLabSize = 20,
+    axisLabSize = 18,
+    titleLabSize = 24,
+    captionLabSize = 22)
+
+exp_plot_tsne = markerExpression(sce_gvhd,
+    markers = expression_markers,
+    reducedDim = 'Rtsne',
+    title = 'Marker exprssion in tSNE space',
+    nrow = 1, ncol = 6,
+    pointSize = 0.05,
+    legendKeyHeight = 1.0,
+    legendLabSize = 14,
+    stripLabSize = 20,
+    axisLabSize = 18,
+    titleLabSize = 24,
+    captionLabSize = 22)
+
+plot_grid(exp_plot_umap, exp_plot_tsne,
+    labels = c('A','B'),
+    nrow = 2, align = "l", label_size = 24)
+```
+
+Run consensus method of FLowSOM and ConsensusClusterPlus on all cells using a selection of markers, with a final desired cluster number of uo to 10. 
+
+```{r run clustering, message=TRUE, eval=TRUE}
+sce_gvhd = runFlowSOM(sce_gvhd, k = 10, markers = clustering_markers)
+```
+
+```{r viz flowSOM, fig.width=11, fig.height=6, eval=TRUE}
+fsom_k10 = metadataPlot(sce_gvhd,
+    colby = 'flowsom_cc_k10',
+    title = 'flowSOM k=10',
+    legendPosition = 'top',
+    legendLabSize = 16,
+    axisLabSize = 16,
+    titleLabSize = 16,
+    subtitleLabSize = 16,
+    captionLabSize = 16)
+
+fsom_clusters = unique(sce_gvhd@metadata$flowsom_cc_k10)
+
+fsom_abundance = plotAbundance(sce_gvhd,
+              clusters = fsom_clusters,
+              clusterAssign = 'flowsom_cc_k10',
+              feature = NULL,
+              legendPosition = 'none', 
+              stripLabSize = 10,
+              axisLabSize = 14,
+              titleLabSize = 12,
+              subtitleLabSize = 10,
+              captionLabSize = 18)
+
+
+plot_grid(fsom_k10, fsom_abundance,
+    labels = c('A','B'),
+    ncol = 2, align = "l", label_size = 20)
+```
+
+```{r diagnostic heatmap, eval=TRUE}
+# With feature
+feature = medianHeatmap(sce_gvhd, grouping = "flowsom_cc_k10", feature = NULL, scale_01 = T)
+```
+
+```{r enriched markers, eval=TRUE}
+library(scran)
+library(tibble)
+
+cytof_markers = findMarkers(assay(sce_gvhd), sce_gvhd@metadata$flowsom_cc_k10, test.type="wilcox", direction="up",lfc=1.5, pval.type="some")
+
+cluster_markers = NULL
+top_n = 3
+for (i in 1:length(cytof_markers)) {
+  
+  deg_markers = cytof_markers[[i]][1:top_n,1:2]
+  
+  deg_markers = rownames_to_column(as.data.frame(deg_markers), var = "marker")
+  
+  markers = data.frame(cluster = rep(i, top_n), deg_markers)
+  
+  cluster_markers = rbind(cluster_markers, markers)
+  
+}
+
+# Top3 DEG markers per cluster
+cluster_markers
+```
+
+```{r merge clusters, fig.width=11, fig.height=6, eval=TRUE}
+# Assignments
+original_cluster_ident = as.character(rep(1:10))
+new_cluster_ident = c("Monocytes", "cDC", "NKT Cells", "CD4+ T Cells", "B Cells","gd T Cells", "CD8+ T Cells", "Basophils", "CD4+ Treg", "NK")
+
+# Set the new annotations
+sce_gvhd = setClusterIdents(sce_gvhd, orig.ident = original_cluster_ident , new.ident = new_cluster_ident, clustering = 'flowsom_cc_k10')
+
+# Vizualise in UMAP space
+cell_annotation = metadataPlot(sce_gvhd,
+    colby = 'cell_annotation',
+    title = 'Annotated clusters',
+    legendLabSize = 8,
+    axisLabSize = 20,
+    titleLabSize = 20,
+    subtitleLabSize = 16,
+    captionLabSize = 16)
+
+annotated_clusters = unique(sce_gvhd@metadata$flowsom_cc_k10)
+
+annotated_abundance = plotAbundance(sce_gvhd,
+              clusters = annotated_clusters,
+              clusterAssign = 'cell_annotation',
+              feature = NULL,
+              legendPosition = 'none', 
+              stripLabSize = 10,
+              axisLabSize = 14,
+              titleLabSize = 12,
+              subtitleLabSize = 10,
+              captionLabSize = 18)
+
+plot_grid(cell_annotation, annotated_abundance, 
+    labels = c('A','B'),
+    ncol = 2, nrow = 1, align = "l", label_size = 20)
+```
+```{r bar plot, eval=TRUE}
+bar_plot = plotAbundance(sce_gvhd,
+              graph_type = 'bar',
+              clusters = annotated_clusters,
+              clusterAssign = 'cell_annotation',
+              feature = 'condition',
+              legendLabSize = 8,
+              stripLabSize = 22,
+              axisLabSize = 22,
+              titleLabSize = 22,
+              subtitleLabSize = 18,
+              captionLabSize = 18)
+
+bar_plot
+```
+
+```{r final heatmap, eval=TRUE}
+# With feature
+feature = medianHeatmap(sce_gvhd, grouping = "cell_annotation", feature = NULL, scale_01 = T, heat_bar = "Greys")
+```
+
+
+
+```{r cell annotations, fig.width=11, fig.height=8, eval=TRUE}
+cell_annotation_dif = metadataPlot(sce_gvhd,
+    colby = 'condition',
+    title = 'UMAP labelled by GvHD status',
+    colkey = c(None = 'royalblue', GvHD = 'red2'),
+    legendPosition = 'top',
+    legendLabSize = 16,
+    axisLabSize = 20,
+    titleLabSize = 20,
+    subtitleLabSize = 16,
+    captionLabSize = 16)
+
+cell_annotation_dif = cell_annotation_dif + facet_wrap(~condition)
+
+abundance_dif = plotAbundance(sce_gvhd,
+              clusters = annotated_clusters,
+              clusterAssign = 'cell_annotation',
+              feature = 'condition',
+              colkey = c(None = 'royalblue', GvHD = 'red2'),
+              legendPosition = 'none', 
+              stripLabSize = 10,
+              axisLabSize = 14,
+              titleLabSize = 12,
+              subtitleLabSize = 10,
+              captionLabSize = 18)
+
+plot_grid(cell_annotation_dif, abundance_dif,
+    labels = c('A','B'),
+    ncol = 2, align = "l", label_size = 20)
+```
+
+```{r abundance test, eval=TRUE}
+ library(broom)
+# This need the individual values
+# This also need the right contrasts
+porportions = diffClust(sce_gvhd, 
+                        clustering = 'cell_annotation')
+
+porportions[,c(1,14:17)]
+```
+
+```{r marker test, eval=TRUE}
+# Need to catch errors - cluster not there causes crash
+marker_test = diffExpression(sce_gvhd,
+                assay = 'scaled',
+                grouping = 'group', # The condensing function
+                feature = 'condition', # The contrast
+                clusterAssign = 'cell_annotation')
+
+sig_markers = marker_test[which(marker_test$p.value < 0.05),]
+
+sig_markers[c(1,12:14),c(13:19)]
+```
+
+```{r activation markers, eval=TRUE}
+
+# Difference in activation markers per cluster
+markerExpressionPerSample(sce_gvhd,
+    caption = '',
+    clusters = c("CD8+ T Cells", "cDC"),
+    feature = 'condition',
+    clusterAssign = 'cell_annotation',
+    markers = activation_markers,
+    colkey = c('royalblue', 'red2'),
+    title = '',
+    stripLabSize = 12,
+    axisLabSize = 10,
+    titleLabSize = 18,
+    subtitleLabSize = 10,
+    captionLabSize = 10)
+```
+
+
+# Session info
+```{r session info, eval=TRUE}
+sessionInfo()
+```
 
 # Contact
 
