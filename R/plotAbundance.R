@@ -69,7 +69,7 @@ plotAbundance = function(
                                   face = 'bold', margin = margin(b = 5, t = 5)))
 
   ## Create the props table
-  counts_table <- table(sct@metadata[,clusterAssign], sct@metadata[,group])
+  counts_table <- table(indata@metadata[,clusterAssign], indata@metadata[,group])
 
   props_table <- t(t(counts_table) / colSums(counts_table)) * 100
   counts <- as.data.frame.matrix(counts_table)
@@ -83,7 +83,7 @@ plotAbundance = function(
   if(is.null(feature) == FALSE){ # No contrast
 
   # Summarize sampleID to metadata feature
-  feature.summary = data.frame(Grouping = sct@metadata[,group], feat = sct@metadata[,feature]) %>%
+  feature.summary = data.frame(Grouping = indata@metadata[,group], feat = indata@metadata[,feature]) %>%
     distinct()
 
   ## Add condition info
@@ -168,7 +168,7 @@ plotAbundance = function(
     }
     else {
 
-      plot = ggplot(plotobj, aes(x = cluster, y = proportion)) + th +
+      plot = ggplot(plotobj, aes(x = factor(cluster), y = proportion)) + th +
         geom_boxplot() +
         geom_point(aes(color = cluster),alpha = 0.8,
                    size = 1) +
