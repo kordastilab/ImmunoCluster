@@ -72,8 +72,8 @@ markerExpressionPerSample <- function(
 
     idx <- which(rownames(indata) %in% markers)
 
-    plotobj <- data.frame(Cluster = sct@metadata[,clusterAssign],
-                          Grouping = sct@metadata[,grouping],
+    plotobj <- data.frame(Cluster = indata@metadata[,clusterAssign],
+                          Grouping = indata@metadata[,grouping],
                           as.data.frame(t(as.matrix(assay(indata, assay)[idx,]))))
 
     plotobj <- plotobj[which(plotobj$Cluster %in% clusters),]
@@ -92,7 +92,7 @@ markerExpressionPerSample <- function(
     if(is.null(feature) == FALSE){ # No contrast
 
       # Summarize sampleID to metadata feature
-      feature.summary = data.frame(Grouping = sct@metadata[,grouping], feat = sct@metadata[,feature]) %>%
+      feature.summary = data.frame(Grouping = indata@metadata[,grouping], feat = indata@metadata[,feature]) %>%
         distinct()
 
       mm = match(plotobj$Grouping, feature.summary$Grouping)
