@@ -1,28 +1,45 @@
 immunoCluster
 ================
 James Opzoomer, Kevin Blighe, Jessica Timms
-2020-03-31
-
-## 1\. Introduction to immunoCluster
-
-The ImmunoCluster package provides a complete toolkit for carry out
-immune profiling from High-dimensional mass (CyTOF) and flow cytometry.
-The package features standardized data infrastructure, using the
-SingleCellExperiment class object, interactive visualization tools and
-convenient implementations for popular algorithms designed for a
-non-specialist. Provided below is a simple walthrough exploring some of
-the packages functionality.
-
-## 2\. Main functionalities of immunoCluster
+2020-04-02
 
 **NOTE: THIS PACKAGE IS STILL UNDER DEVELOPMENT AND SO SOME OF THE
 FUNCTIONALITY IS NOT FULLY TESTED**
+
+## 1\. Introduction to immunoCluster
+
+The immunoCluster package provides a complete toolkit to carry out
+immune profiling from both liquid and imaging high-dimensional mass
+(CyTOF) and flow cytometry. The package features standardized data
+infrastructure, making use of the SingleCellExperiment class object,
+interactive visualization tools and convenient implementations for
+popular dimenionality reduction and clustering algorithms designed for a
+non-specialist. To learn using immunoCluster we have provided
+walkthrough below exploring some of the packages basic functionality.
+
+## 2\. Main functionalities of immunoCluster
+
+The basic pipeline of immunoCluster analysis involves:
+
+  - Creating file and marker labels to generate the experimental design
+
+  - Importing the .fcs data into the SingelCellExperiment object
+
+  - Exploratory analysis of the data
+
+  - Dimensionality reduction
+
+  - Clustering and biological interpretation of the clusters
+
+  - Differential abundace and differential expression analysis
 
 # Installation
 
 ## 1\. Install the package from github
 
-Install the development version of the package:
+Install the development version of the package, installation will
+usually take a few minutes, depending on the number of dependencies that
+have been installed on your pc. Install immunoCluster from github here:
 
 ``` r
   # Install devtools for github installation if not present
@@ -36,6 +53,8 @@ Install the development version of the package:
 ```
 
 ## 2\. Load the package and the dependancies into the R session
+
+Load necessary packages:
 
 ``` r
   library(immunoCluster)
@@ -56,34 +75,53 @@ Install the development version of the package:
   library(pheatmap)
 ```
 
-# Walkthrough: Immune profiling PBMC from simple experimental setup
+# Walkthrough: Immune profiling PBMC from a two condition experimental design
 
 ## 1\. Introduction
 
-In this walkthrough we will start with FCS data files to examine changes
-in immune populations from PBMC. The samples were taken from patients
-following hematopoetic reconsitution in leukemia patients following BMT.
-The dataset represents 15 individuals, sampled at multiple time points
-after BMT, for a total of 28 samples. Of these patients, a small subset
-suffered from graft versus host disease (GvHD, n = 3), whereas most
-other patients did not experience such complications.
+In this walkthrough we will learn to perform immune profiling and
+examine the from changes in immune populations from human PBMC. We will
+start with pre-gated .fcs data files. The samples were taken from
+patients following hematopoetic reconsitution in leukemia patients
+following BMT. The dataset represents 15 individuals, sampled at
+multiple time points after BMT, for a total of 28 samples. Of these
+patients, a small subset suffered from graft versus host disease (GvHD,
+n = 3), whereas most other patients did not experience such
+complications.
+
+We have performed gating cleanup on a subset of the dataset which can be
+dowloaded from zenodo, along with all the other data required for the
+walkthough. \[Insert zenodo button\].
 
 The data was originally reported in [Comprehensive Immune Monitoring of
 Clinical Trials to Advance Human
 Immunotherapy](https://www.sciencedirect.com/science/article/pii/S2211124719308228).
+The full raw data (not used here, but which was used in the
+immunoCluster paper) is available
+[here](http://flowrepository.org/id/FR-FCM-Z244).
 
-The raw data is available
-[here](http://flowrepository.org/id/FR-FCM-Z244). We have performed
-gating cleanup on a subset of the dataset which can be dowloaded from
-zenodo. \[Insert zenodo button\]
+## 2\. Download and import data
 
-## 2\. Import data
+You can download all the .fcs files from zenodo here here, or
+alternatively you can download the SingleCellExperiment object directly
+into memory and skip the import process just below.
 
 ``` r
 # Insert zenodo link
 ```
 
+The experimental design informs the what metadata we will need to
+incorporate into the SingleCellExperiment object, here we have created
+one table (from an excel file), that contains five columns, and one row
+for each .fcs file. We will include the .fcs filename, the GvHD
+“condition” of the patient, patient\_id, a unique sample\_id, and the
+day\_id representing the day following BMT that the sample was taken.
+(Link to excel file).
+
 ``` r
+# Excel file can be read in using this line
+#
+
 # Insert zenodo RDS link to replace local
 sample_metadata_df = readRDS(file = "../github_readme/rds_objects/sample_metadata.rds")
 
@@ -100,7 +138,19 @@ head(sample_metadata_df)
     ## 5 BMT08_D30_clean.fcs None      P8         S15       D30   
     ## 6 BMT09_D30_clean.fcs None      P9         S16       D30
 
+We also include a table that represents a row for every channel in the
+original fcs file. The columns represent the original name if the
+channel, the name we want to rename it in antigen. We then optionally
+include columns of binary 1 and 0s that allow us to group markers into
+relevant sets, here for clustering or differential expression analysis.
+Any marker that is not included in either group will be discarded. This
+table must be an exact match to the order that the markers are
+represnted in the raw .fcs files. (Link to excel file).
+
 ``` r
+# Excel file can be read in using this line
+#
+
 # Insert zenodo RDS link to replace local
 panel_metadata_df = readRDS(file = "../github_readme/rds_objects/panel_metadata.rds")
 
@@ -131,14 +181,25 @@ if(length(discard) > 0){colsDiscard = panel_metadata_df$metal[queries]
 }else{colsDiscard = ''}
 ```
 
+We next load the .fcs data and the metadata into the
+SingleCellExperiment object. Here the number of rows in the metadata
+must match the number of .fcs files to be analysed. We have the option
+to specify the scaling transformation and the cofactor. We have used
+asinh with cofactor 5. It is possible to downsaple from each file or by
+a specified metadata grouping, although here we have not downsampled.
+The columns are also renamed as specified in the panel\_metadata table
+and columns not needed are discarded.
+
 ``` r
+# Collect all .fcs files from a directory
 filelist = list.files(
       path = "../github_readme/fcs_data",
     pattern = "*.fcs|*.FCS",
     full.names = TRUE)
 
+# Select which metadata to include
 metadata = data.frame(
-      file = filelist,
+      file = filelist, 
       group = sample_metadata_df$sample_id,
       condition = sample_metadata_df$condition,
       patient_id = sample_metadata_df$patient_id,
@@ -146,25 +207,26 @@ metadata = data.frame(
       row.names = filelist,
       stringsAsFactors = FALSE)
 
-# Re-jig the accept discard columns to get a complete limited dataset.
+# Create SCE object with CyTOF data inside
 require(SingleCellExperiment)
   sce_gvhd = processFCS(
     files = filelist,
     metadata = metadata,
-    transformation = TRUE,
-    filter = FALSE,
-    transFun = function (x) asinh(x),
+    transformation = TRUE, # Transform data
+    filter = FALSE, 
+    transFun = function (x) asinh(x), # Using asinh function (cofactor 5 is used by default)
     downsampleVar = NULL, 
     downsample = NULL, # Downsample to n cells per downsample_grouping
-    downsample_grouping = NULL, # Downdample to downsample cells by the specified metadata slot
-    newColnames = col_names,
-    colsDiscard = colsDiscard)
+    downsample_grouping = NULL, # Downsample to downsample cells by the specified metadata slot
+    newColnames = col_names, # Rename columns from panel metadata 
+    colsDiscard = colsDiscard) # Discard columns not selected for downstream analysis
 
 sce_gvhd
 ```
 
-Aternately you can download the imported RDS directly to skip the import
-step and save time:
+Using the code chunk below you can download the imported r data object
+with the metatdat incorporated directly into memory to skip the import
+steps and save time:
 
 ``` r
 # Insert zenodo RDS link
@@ -187,6 +249,18 @@ sce_gvhd
 
 ## 2\. Data Exploration
 
+We provide several functions to examine globla patterns within the data,
+they can be used to get an idea of the influence of conditions/treatment
+or batch effects within the data. The mdsplot() function will generate a
+multi-dimensional scaling (MDS) plot on median expresion values for each
+channel. MDS plots represent an unsupervised way to indicate
+similarities between samples at a global level berfore more in depth
+analsysi. In the example here we can see that there is no observabe
+high-level difference between the two GvHD condition samples, however
+there does appear to be a weak separation between samples collected at
+D30 and D90 post BMT. Here and throughout the pipeline, colkey can be
+used to specify plotting colors for graphing conditions.
+
 ``` r
 mds1 = mdsplot(sce_gvhd, 
                feature = "condition", 
@@ -203,6 +277,17 @@ plot_grid(mds1, mds2,
 
 ![](README_files/figure-gfm/mds_plot-1.png)<!-- -->
 
+Further to the mds plots,the medianHeatmap() function will generate a
+heatmap with median marker expression across all (default) or a
+selection (with markers = ). The heatmap is clustered over rows and
+columns. The heatmap can be generated on the asinh tranformed values
+(default) or 0-\>1 scaled (with scale\_01 = T). The heatmap should
+provide insight as to which markers are highly expressed and wether
+thier marker expression profile is assosciated with a metadata
+condition. Highly expressed markers will have a greater influence on
+clustering and this will help understand clustering results generated
+downstream.
+
 ``` r
 feature = medianHeatmap(sce_gvhd, grouping = "group", feature = "condition", feature_cols = c('royalblue', 'red2'))
 ```
@@ -211,8 +296,13 @@ feature = medianHeatmap(sce_gvhd, grouping = "group", feature = "condition", fea
 
 ## 3\. Dimensionality reduction and clustering
 
-Run the UMAP on selected lineage markers, downampling to 2000 cells per
-sample. tSNE is also supported.
+immunoCluster supports multiple different dimensionality reduction
+algorithms and has UMAP and tSNE functionality implemented below with
+the ability to downsample before running the algorithms. We run both
+UMAP and tSNE on selected lineage markers, downsampling to 1000 cells
+per sample to reduce runtime. The dimensionality reductions are stored
+in the reducedDimanmes slot and any other dimensionality reduction, like
+PCA, can also be stored in the SCE object in parallel.
 
 ``` r
 require(umap)
@@ -221,7 +311,21 @@ sce_gvhd = performUMAP(sce_gvhd, downsample = 1000, useMarkers = clustering_mark
 
 # Run tSNE and store in sce object
 sce_gvhd = performTSNE(sce_gvhd, downsample = 1000, useMarkers = clustering_markers)
+
+sce_gvhd
 ```
+
+    ## class: SingleCellExperiment 
+    ## dim: 32 912813 
+    ## metadata(5): file group condition patient_id day_id
+    ## assays(1): scaled
+    ## rownames(32): CD16 CD152 ... HLA_DR CD56
+    ## rowData names(0):
+    ## colnames(912813): cell1 cell2 ... cell912812 cell912813
+    ## colData names(0):
+    ## reducedDimNames(2): UMAP Rtsne
+    ## spikeNames(0):
+    ## altExpNames(0):
 
 ``` r
 expression_markers =  c('CD3', 'CD4', 'CD8a', 'CD11b', 'CD19', 'CD56')
@@ -527,6 +631,14 @@ markerExpressionPerSample(sce_gvhd,
 
 ![](README_files/figure-gfm/activation%20markers-1.png)<!-- -->
 
+``` r
+library(diffcyt)
+```
+
+``` r
+# SubsetSCE function
+```
+
 # Session info
 
 ``` r
@@ -549,63 +661,69 @@ sessionInfo()
     ## [8] methods   base     
     ## 
     ## other attached packages:
-    ##  [1] broom_0.5.5                 tibble_2.1.3               
-    ##  [3] scran_1.14.6                umap_0.2.5.0               
-    ##  [5] pheatmap_1.0.12             Rtsne_0.15                 
-    ##  [7] reshape2_1.4.3              limma_3.42.2               
-    ##  [9] FlowSOM_1.18.0              igraph_1.2.5               
-    ## [11] ConsensusClusterPlus_1.50.0 RColorBrewer_1.1-2         
-    ## [13] cowplot_1.0.0               stringr_1.4.0              
-    ## [15] flowCore_1.52.1             immunoCluster_0.1.0        
-    ## [17] dplyr_0.8.5                 ggrepel_0.8.2              
-    ## [19] ggplot2_3.3.0               SingleCellExperiment_1.8.0 
-    ## [21] SummarizedExperiment_1.16.1 DelayedArray_0.12.2        
-    ## [23] BiocParallel_1.20.1         matrixStats_0.56.0         
-    ## [25] Biobase_2.46.0              GenomicRanges_1.38.0       
-    ## [27] GenomeInfoDb_1.22.1         IRanges_2.20.2             
-    ## [29] S4Vectors_0.24.3            BiocGenerics_0.32.0        
-    ## [31] kableExtra_1.1.0            knitr_1.28                 
+    ##  [1] diffcyt_1.6.4               broom_0.5.5                
+    ##  [3] tibble_3.0.0                scran_1.14.6               
+    ##  [5] umap_0.2.5.0                pheatmap_1.0.12            
+    ##  [7] Rtsne_0.15                  reshape2_1.4.3             
+    ##  [9] limma_3.42.2                FlowSOM_1.18.0             
+    ## [11] igraph_1.2.5                ConsensusClusterPlus_1.50.0
+    ## [13] RColorBrewer_1.1-2          cowplot_1.0.0              
+    ## [15] stringr_1.4.0               flowCore_1.52.1            
+    ## [17] immunoCluster_0.1.0         dplyr_0.8.5                
+    ## [19] ggrepel_0.8.2               ggplot2_3.3.0              
+    ## [21] SingleCellExperiment_1.8.0  SummarizedExperiment_1.16.1
+    ## [23] DelayedArray_0.12.2         BiocParallel_1.20.1        
+    ## [25] matrixStats_0.56.0          Biobase_2.46.0             
+    ## [27] GenomicRanges_1.38.0        GenomeInfoDb_1.22.1        
+    ## [29] IRanges_2.20.2              S4Vectors_0.24.3           
+    ## [31] BiocGenerics_0.32.0         kableExtra_1.1.0           
+    ## [33] knitr_1.28                 
     ## 
     ## loaded via a namespace (and not attached):
-    ##   [1] backports_1.1.5          plyr_1.8.6               splines_3.6.2           
-    ##   [4] fda_2.4.8.1              scater_1.14.6            digest_0.6.25           
-    ##   [7] htmltools_0.4.0          viridis_0.5.1            fansi_0.4.1             
-    ##  [10] magrittr_1.5             CytoML_1.12.1            cluster_2.1.0           
-    ##  [13] ks_1.11.7                readr_1.3.1              RcppParallel_5.0.0      
-    ##  [16] R.utils_2.9.2            askpass_1.1              flowWorkspace_3.34.1    
-    ##  [19] jpeg_0.1-8.1             colorspace_1.4-1         rvest_0.3.5             
-    ##  [22] rrcov_1.5-2              xfun_0.12                crayon_1.3.4            
-    ##  [25] RCurl_1.98-1.1           jsonlite_1.6.1           hexbin_1.28.1           
-    ##  [28] graph_1.64.0             glue_1.3.2               flowClust_3.24.0        
-    ##  [31] gtable_0.3.0             zlibbioc_1.32.0          XVector_0.26.0          
-    ##  [34] webshot_0.5.2            ggcyto_1.14.1            BiocSingular_1.2.2      
-    ##  [37] IDPmisc_1.1.20           Rgraphviz_2.30.0         DEoptimR_1.0-8          
-    ##  [40] scales_1.1.0             mvtnorm_1.1-0            edgeR_3.28.1            
-    ##  [43] Rcpp_1.0.4               viridisLite_0.3.0        clue_0.3-57             
-    ##  [46] reticulate_1.13          dqrng_0.2.1              openCyto_1.24.0         
-    ##  [49] rsvd_1.0.3               mclust_5.4.5             tsne_0.1-3              
-    ##  [52] httr_1.4.1               ellipsis_0.3.0           pkgconfig_2.0.3         
-    ##  [55] XML_3.99-0.3             R.methodsS3_1.8.0        farver_2.0.3            
-    ##  [58] flowViz_1.50.0           locfit_1.5-9.1           utf8_1.1.4              
-    ##  [61] flowStats_3.44.0         tidyselect_1.0.0         labeling_0.3            
-    ##  [64] rlang_0.4.5              munsell_0.5.0            tools_3.6.2             
-    ##  [67] cli_2.0.2                generics_0.0.2           evaluate_0.14           
-    ##  [70] yaml_2.2.1               robustbase_0.93-6        purrr_0.3.3             
-    ##  [73] nlme_3.1-145             RBGL_1.62.1              R.oo_1.23.0             
-    ##  [76] xml2_1.2.2               compiler_3.6.2           rstudioapi_0.11         
-    ##  [79] beeswarm_0.2.3           png_0.1-7                statmod_1.4.34          
-    ##  [82] pcaPP_1.9-73             stringi_1.4.6            RSpectra_0.16-0         
-    ##  [85] lattice_0.20-40          Matrix_1.2-18            vctrs_0.2.4             
-    ##  [88] pillar_1.4.3             lifecycle_0.2.0          BiocNeighbors_1.4.2     
-    ##  [91] data.table_1.12.8        bitops_1.0-6             irlba_2.3.3             
-    ##  [94] corpcor_1.6.9            R6_2.4.1                 latticeExtra_0.6-29     
-    ##  [97] KernSmooth_2.23-16       gridExtra_2.3            vipor_0.4.5             
-    ## [100] MASS_7.3-51.5            gtools_3.8.1             assertthat_0.2.1        
-    ## [103] openssl_1.4.1            withr_2.1.2              mnormt_1.5-6            
-    ## [106] GenomeInfoDbData_1.2.2   hms_0.5.3                ncdfFlow_2.32.0         
-    ## [109] grid_3.6.2               tidyr_1.0.2              rmarkdown_2.1           
-    ## [112] DelayedMatrixStats_1.8.0 base64enc_0.1-3          ggbeeswarm_0.6.0        
-    ## [115] ellipse_0.4.1
+    ##   [1] utf8_1.1.4               reticulate_1.13          R.utils_2.9.2           
+    ##   [4] ks_1.11.7                tidyselect_1.0.0         lme4_1.1-21             
+    ##   [7] grid_3.6.2               munsell_0.5.0            codetools_0.2-16        
+    ##  [10] statmod_1.4.34           withr_2.1.2              colorspace_1.4-1        
+    ##  [13] flowViz_1.50.0           rstudioapi_0.11          flowClust_3.24.0        
+    ##  [16] robustbase_0.93-6        openCyto_1.24.0          labeling_0.3            
+    ##  [19] GenomeInfoDbData_1.2.2   mnormt_1.5-6             farver_2.0.3            
+    ##  [22] flowWorkspace_3.34.1     TH.data_1.0-10           vctrs_0.2.4             
+    ##  [25] generics_0.0.2           xfun_0.12                R6_2.4.1                
+    ##  [28] ggbeeswarm_0.6.0         clue_0.3-57              rsvd_1.0.3              
+    ##  [31] locfit_1.5-9.4           bitops_1.0-6             assertthat_0.2.1        
+    ##  [34] scales_1.1.0             multcomp_1.4-12          beeswarm_0.2.3          
+    ##  [37] gtable_0.3.0             sandwich_2.5-1           rlang_0.4.5             
+    ##  [40] GlobalOptions_0.1.1      splines_3.6.2            hexbin_1.28.1           
+    ##  [43] yaml_2.2.1               backports_1.1.5          IDPmisc_1.1.20          
+    ##  [46] RBGL_1.62.1              tools_3.6.2              ellipsis_0.3.0          
+    ##  [49] Rcpp_1.0.4               plyr_1.8.6               base64enc_0.1-3         
+    ##  [52] zlibbioc_1.32.0          purrr_0.3.3              RCurl_1.98-1.1          
+    ##  [55] openssl_1.4.1            GetoptLong_0.1.8         viridis_0.5.1           
+    ##  [58] zoo_1.8-7                cluster_2.1.0            fda_2.4.8.1             
+    ##  [61] magrittr_1.5             ncdfFlow_2.32.0          data.table_1.12.8       
+    ##  [64] RSpectra_0.16-0          circlize_0.4.8           mvtnorm_1.1-0           
+    ##  [67] hms_0.5.3                evaluate_0.14            XML_3.99-0.3            
+    ##  [70] jpeg_0.1-8.1             mclust_5.4.5             gridExtra_2.3           
+    ##  [73] shape_1.4.4              ggcyto_1.14.1            compiler_3.6.2          
+    ##  [76] scater_1.14.6            ellipse_0.4.1            flowStats_3.44.0        
+    ##  [79] KernSmooth_2.23-16       crayon_1.3.4             minqa_1.2.4             
+    ##  [82] R.oo_1.23.0              htmltools_0.4.0          corpcor_1.6.9           
+    ##  [85] pcaPP_1.9-73             tidyr_1.0.2              rrcov_1.5-2             
+    ##  [88] RcppParallel_5.0.0       ComplexHeatmap_2.2.0     MASS_7.3-51.5           
+    ##  [91] boot_1.3-24              Matrix_1.2-18            readr_1.3.1             
+    ##  [94] cli_2.0.2                R.methodsS3_1.8.0        pkgconfig_2.0.3         
+    ##  [97] xml2_1.2.5               vipor_0.4.5              dqrng_0.2.1             
+    ## [100] webshot_0.5.2            XVector_0.26.0           rvest_0.3.5             
+    ## [103] digest_0.6.25            tsne_0.1-3               graph_1.64.0            
+    ## [106] rmarkdown_2.1            edgeR_3.28.1             DelayedMatrixStats_1.8.0
+    ## [109] gtools_3.8.2             rjson_0.2.20             nloptr_1.2.2.1          
+    ## [112] lifecycle_0.2.0          nlme_3.1-145             jsonlite_1.6.1          
+    ## [115] BiocNeighbors_1.4.2      viridisLite_0.3.0        askpass_1.1             
+    ## [118] fansi_0.4.1              pillar_1.4.3             lattice_0.20-40         
+    ## [121] survival_3.1-11          httr_1.4.1               DEoptimR_1.0-8          
+    ## [124] glue_1.3.2               png_0.1-7                Rgraphviz_2.30.0        
+    ## [127] stringi_1.4.6            BiocSingular_1.2.2       CytoML_1.12.1           
+    ## [130] latticeExtra_0.6-29      irlba_2.3.3
 
 # Contact
 
