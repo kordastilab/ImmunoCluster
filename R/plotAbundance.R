@@ -8,6 +8,7 @@ plotAbundance = function(
   feature = 'condition',
   colkey = NULL,
   legendPosition = 'right',
+  pointSize = 1,
   legendLabSize = 12,
   legendIconSize = 5.0,
   legendKeyHeight = 2.5,
@@ -121,9 +122,9 @@ plotAbundance = function(
   else{
 
     plot = ggplot(plotobj, aes(x = cluster, y = proportion, fill = condition)) + th +
-      geom_boxplot() +
-      geom_point(aes(color = condition), alpha = 0.8, position = position_jitterdodge(),
-                 size = 1) +
+      geom_boxplot(outlier.shape = NA) +
+      geom_point(aes(color = condition), alpha = 0.5, position = position_jitterdodge(),
+                 size = pointSize) +
       theme(axis.text.x = element_text(angle = 90, hjust = 1)) + xlab(xlab) + ylab(ylab)
 
     # sort out custom colour pairing,
@@ -169,9 +170,9 @@ plotAbundance = function(
     else {
 
       plot = ggplot(plotobj, aes(x = factor(cluster), y = proportion)) + th +
-        geom_boxplot() +
-        geom_point(aes(color = cluster),alpha = 0.8,
-                   size = 1) +
+        geom_boxplot(outlier.shape = NA) +
+        geom_point(aes(color = cluster),alpha = 0.5,
+                   size = pointSize) +
         theme(axis.text.x = element_text(angle = 90, hjust = 1)) + xlab(xlab) + ylab(ylab)
 
 
