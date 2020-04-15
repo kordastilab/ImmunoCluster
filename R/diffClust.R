@@ -3,7 +3,9 @@ diffClust <- function(
   sct,
   group = 'group',
   clustering = 'cell_annotation',
-  feature = 'condition'
+  feature = 'condition',
+  p_val = 'padj',
+  threshold = 0.1
 ){
 
   ## Create the props table

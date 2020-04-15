@@ -44,7 +44,7 @@ diffExpression <- function(
 
   for(i in 1:length(rownames(expr_median_sample_cluster))){
 
-    p_val = tidy(pairwise.wilcox.test(as.numeric(expr_median_sample_cluster[i,]),
+    pval = tidy(pairwise.wilcox.test(as.numeric(expr_median_sample_cluster[i,]),
                                       g = grouping_vector,
                                       paired = F, correct = F, exact = F))
 
@@ -61,7 +61,7 @@ diffExpression <- function(
 
    colnames(out_data) = c('mean_1', 'mean_2', 'logfc')
 
-   out_data = cbind(out_data, p_val)
+   out_data = cbind(out_data, "p_val" = pval$p.value)
 
     # Add mean1, mean2 and LogFC
     pval_df = rbind(pval_df, out_data)
@@ -69,7 +69,9 @@ diffExpression <- function(
   }
 
   expression_df = cbind(expr_median_sample_cluster, pval_df)
-  expression_df$padj = p.adjust(expression_df$p.value, method = "BH")
+  expression_df$padj = p.adjust(expression_df$p_val, method = "BH")
+  expression_df = cbind("cluster" = rownames(expression_df), expression_df)
+  rownames(expression_df) = NULL
 
   return(expression_df)
 
