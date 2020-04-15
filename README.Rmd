@@ -16,7 +16,7 @@ always_allow_html: true
 
 ## 1. Introduction to immunoCluster
 
-The immunoCluster package provides a complete toolkit to carry out immune profiling from both liquid and imaging high-dimensional mass (CyTOF) and flow cytometry. The package features standardized data infrastructure, making use of the SingleCellExperiment class object, interactive visualization tools and convenient implementations for popular dimenionality reduction and clustering algorithms designed for a non-specialist. To learn using immunoCluster we have provided walkthrough below exploring some of the packages basic functionality.   
+The immunoCluster package provides a complete toolkit to carry out immune profiling from both liquid and imaging high-dimensional mass (CyTOF) and flow cytometry. The package features standardized data infrastructure, making use of the SingleCellExperiment class object, interactive visualization tools and convenient implementations for popular dimensionality reduction and clustering algorithms designed for a non-specialist. To learn using immunoCluster we have provided walkthrough below exploring some of the package's basic functionality on a published dataset.   
 
 ## 2. Main functionalities of immunoCluster
 
@@ -24,7 +24,7 @@ The basic pipeline of immunoCluster analysis involves:
 
 * Creating file and marker labels to generate the experimental design
 
-* Importing the .fcs data into the SingelCellExperiment object
+* Importing .fcs data into the SingelCellExperiment object
 
 * Exploratory analysis of the data
 
@@ -32,12 +32,12 @@ The basic pipeline of immunoCluster analysis involves:
 
 * Clustering and biological interpretation of the clusters
 
-* Differential abundace and differential expression analysis
+* Differential abundance and differential expression analysis
 
 ```{r, echo = FALSE, message = FALSE}
   library(knitr)
   library(kableExtra)
-  opts_chunk$set(tidy = FALSE, message = FALSE, warning = FALSE)
+  opts_chunk$set(tidy = FALSE, message = FALSE, warning = FALSE, fig.align = 'center')
 ```
 
 # Installation
@@ -84,7 +84,9 @@ Load necessary packages:
 
 ## 1. Introduction
 
-In this walkthrough we will learn to perform immune profiling and examine the from changes in immune populations from human PBMC. We will start with pre-gated .fcs data files. The samples were taken from patients following hematopoetic reconsitution in leukemia patients following BMT. The dataset represents 15 individuals, sampled at multiple time points after BMT, for a total of 28 samples. Of these patients, a small subset suffered from graft versus host disease (GvHD, n = 3), whereas most other patients did not experience such complications. 
+In this walkthrough we will learn to perform immune profiling with immunoCluster and examine changes in immune populations from human PBMC following bone marrow transplantation (BMT). 
+
+We will start with pre-gated .fcs data files. The samples were taken from patients following hematopoetic reconstitution in leukemia patients following BMT. The dataset represents 15 individuals, sampled at two time points (Day 30 and 90) after BMT, for a total of 28 samples. Of these patients, a small subset suffered from graft versus host disease (GvHD, n = 3), whereas most other patients did not experience such complications. 
 
 We have performed gating cleanup on a subset of the dataset which can be dowloaded from zenodo, along with all the other data required for the walkthough.  [Insert zenodo button].
 
@@ -100,7 +102,7 @@ You can download all the .fcs files from zenodo here here, or alternatively you 
 
 ```
 
-The experimental design informs the what metadata we will need to incorporate into the SingleCellExperiment object, here we have created one table (from an excel file), that contains five columns, and one row for each .fcs file. We will include the .fcs filename, the GvHD "condition" of the patient,  patient_id, a unique sample_id, and the day_id representing the day following BMT that the sample was taken. (Link to excel file).
+The experimental design informs the what metadata we will need to incorporate into the SingleCellExperiment (SCE) object, here we have created one table (from an excel file), that contains five columns, and one row for each .fcs file. We will include the .fcs filename, the GvHD "condition" of the patient,  patient_id, a unique sample_id, and the day_id representing the day following BMT that the sample was taken. (Link to excel file).
 
 ```{r sample setup, eval=TRUE}
 # Excel file can be read in using this line
@@ -112,7 +114,7 @@ sample_metadata_df = readRDS(file = "../github_readme/rds_objects/sample_metadat
 head(sample_metadata_df)
 ```
 
-We also include a table that represents a row for every channel in the original fcs file. The columns represent the original name if the channel, the name we want to rename it in antigen. We then optionally include columns of binary 1 and 0s that allow us to group markers into relevant sets, here for clustering or differential expression analysis. Any marker that is not included in either group will be discarded. This table must be an exact match to the order that the markers are represnted in the raw .fcs files. (Link to excel file).
+We also create a table that represents the marker panel information. This table contains a row for every channel in the original fcs file. The columns represent the original name of the channel and the channel name we want to rename it to in antigen. We then optionally include columns of binary 1 and 0s that allow us to group markers into relevant sets, here we have two sets, one group of markers for clustering and another for downstream differential expression analysis. Any marker that is not included in either group will be discarded when we build the SCE object. This table must be an exact match to the order that the markers are represnted in the raw .fcs files or the . (Link to excel file).
 
 ```{r panel setup, eval=TRUE}
 # Excel file can be read in using this line
@@ -137,7 +139,7 @@ if(length(discard) > 0){colsDiscard = panel_metadata_df$metal[queries]
 
 ```
 
-We next load the .fcs data and the metadata into the SingleCellExperiment object. Here the number of rows in the metadata must match the number of .fcs files to be analysed. We have the option to specify the scaling transformation and the cofactor. We have used asinh with cofactor 5. It is possible to downsaple from each file or by a specified metadata grouping, although here we have not downsampled. The columns are also renamed as specified in the panel_metadata table and columns not needed are discarded.
+We next load the .fcs data and the metadata into the SCE object. Here the number of rows in the metadata must match the number of .fcs files to be analysed. We have the option to specify the scaling transformation and the cofactor. We have used asinh with cofactor 5. It is possible to downsaple from each file or by a specified metadata grouping, although here we have not downsampled in this case. The columns are also renamed as specified in the panel_metadata table and columns not needed are discarded.
 
 ```{r import data, eval=FALSE}
 
@@ -147,7 +149,7 @@ filelist = list.files(
     pattern = "*.fcs|*.FCS",
     full.names = TRUE)
 
-# Select which metadata to include
+# Select which metadata to include from the sample metadata table
 metadata = data.frame(
       file = filelist, 
       group = sample_metadata_df$sample_id,
@@ -162,19 +164,19 @@ require(SingleCellExperiment)
   sce_gvhd = processFCS(
     files = filelist,
     metadata = metadata,
+    filter = FALSE, # Do not perform noise filtering
     transformation = TRUE, # Transform data
-    filter = FALSE, 
     transFun = function (x) asinh(x), # Using asinh function (cofactor 5 is used by default)
-    downsampleVar = NULL, 
-    downsample = NULL, # Downsample to n cells per downsample_grouping
-    downsample_grouping = NULL, # Downsample to downsample cells by the specified metadata slot
+    downsampleVar = NULL, # No downsampling by variance
+    downsample = NULL, # Downsample to n cells per downsample_grouping 
+    downsample_grouping = NULL, # if downsample = n, downsample n cells by the specified metadata grouping.
     newColnames = col_names, # Rename columns from panel metadata 
     colsDiscard = colsDiscard) # Discard columns not selected for downstream analysis
 
 sce_gvhd
 ```
 
-Using the code chunk below you can download the imported r data object with the metatdat incorporated directly into memory to skip the import steps and save time:
+Using the code chunk below you can download the imported r data object with the metatdata incorporated, directly into memory to skip the import steps to save time:
 
 ```{r download rds, eval=TRUE}
 # Insert zenodo RDS link
@@ -185,7 +187,7 @@ sce_gvhd
 
 ## 2. Data Exploration
 
-We provide several functions to examine globla patterns within the data, they can be used to get an idea of the influence of conditions/treatment or batch effects within the data. The mdsplot() function will generate a multi-dimensional scaling (MDS) plot on median expresion values for each channel. MDS plots represent an unsupervised way to indicate similarities between samples at a global level berfore more in depth analsysi. In the example here we can see that there is no observabe high-level difference between the two GvHD condition samples, however there does appear to be a weak separation between samples collected at D30 and D90 post BMT. Here and throughout the pipeline, colkey can be used to specify plotting colors for graphing conditions. 
+We provide several functions to examine global patterns within the data, they can be used to get an idea of the influence of conditions/treatment or batch effects within the data. The mdsplot() function will generate a multi-dimensional scaling (MDS) plot on median expresion values for each channel. MDS plots represent an unsupervised way to indicate similarities between samples at a global level berfore more in depth analsysis. In the example here we can see that there is no observable high-level difference between the two GvHD condition samples, however there does appear to be a weak separation between samples collected at D30 and D90 post BMT. Here and throughout the pipeline, colkey can be used to specify plotting colors for graphing conditions. 
 
 ```{r mds_plot, fig.width=11, fig.height=3.75, eval=TRUE}
 mds1 = mdsplot(sce_gvhd, 
@@ -201,7 +203,7 @@ plot_grid(mds1, mds2,
     ncol = 2, align = "l", label_size = 20)
 ```
 
-Further to the mds plots,the medianHeatmap() function will generate a heatmap with median marker expression across all (default) or a selection (with markers = ). The heatmap is clustered over rows and columns. The heatmap can be generated on the asinh tranformed values (default) or 0->1 scaled (with scale_01 = T). The heatmap should provide insight as to which markers are highly expressed and wether thier marker expression profile is assosciated with a metadata condition. Highly expressed markers will have a greater influence on clustering and this will help understand clustering results generated downstream.
+Further to the mds plots,the medianHeatmap() function will generate a heatmap with median marker expression across all (default) or a selection (with markers = ). The heatmap is clustered over rows and columns. The heatmap can be generated on the asinh tranformed values (default) or 0->1 scaled (with scale_01 = T). The heatmap should provide insight as to which markers are highly expressed and wether their marker expression profile is associated with a metadata condition. Highly expressed markers will have a greater influence on clustering and this will help understand clustering results generated downstream.
 
 ```{r sample heatmap, eval=TRUE}
 feature = medianHeatmap(sce_gvhd, grouping = "group", feature = "condition", feature_cols = c('royalblue', 'red2'))
@@ -209,7 +211,7 @@ feature = medianHeatmap(sce_gvhd, grouping = "group", feature = "condition", fea
 
 ## 3. Dimensionality reduction and clustering
 
-immunoCluster supports multiple different dimensionality reduction algorithms and has UMAP and tSNE functionality implemented below with the ability to downsample before running the algorithms. We run both UMAP and tSNE on selected lineage markers, downsampling to 1000 cells per sample to reduce runtime. The dimensionality reductions are stored in the reducedDimanmes slot and any other dimensionality reduction, like PCA, can also be stored in the SCE object in parallel.
+immunoCluster supports multiple different dimensionality reduction algorithms and has UMAP and tSNE functionality implemented below with the ability to downsample before running the algorithms. We run both UMAP and tSNE on selected lineage markers, downsampling to 1000 randomly selected cells per sample to reduce runtime. The dimensionality reductions are stored in the reducedDimNames slot and any other dimensionality reduction, like PCA, can also be stored in the SCE object in parallel.
 
 ```{r run UMAP, message=FALSE, eval=TRUE}
 require(umap)
@@ -222,33 +224,35 @@ sce_gvhd = performTSNE(sce_gvhd, downsample = 1000, useMarkers = clustering_mark
 sce_gvhd
 ```
 
-```{r, fig.width=14, fig.height=10, eval=TRUE}
+The markerExpression() function will allow us to view the UMAP dimensionality reductions, overlaying marker expression of our major immune supopulation lineage markers as an exporatory analysis of the resultant UMAP. The dimensionality reduction data to use is specified with the reducedDim parameter.The markers and several ggplot style plotting parameters can be specified resulting in tiled plots of the UMAP with marker expression as colour. 
+
+```{r, fig.width=18, fig.height=10, eval=TRUE}
 expression_markers =  c('CD3', 'CD4', 'CD8a', 'CD11b', 'CD19', 'CD56')
 
 exp_plot_umap = markerExpression(sce_gvhd,
     markers = expression_markers,
     reducedDim = 'UMAP',
-    title = 'Marker exprssion in UMAP space',
+    title = 'UMAP',
     nrow = 1, ncol = 6,
     pointSize = 0.05,
     legendKeyHeight = 1.0,
     legendLabSize = 14,
     stripLabSize = 20,
     axisLabSize = 18,
-    titleLabSize = 24,
+    titleLabSize = 20,
     captionLabSize = 22)
 
 exp_plot_tsne = markerExpression(sce_gvhd,
     markers = expression_markers,
     reducedDim = 'Rtsne',
-    title = 'Marker exprssion in tSNE space',
+    title = 'tSNE',
     nrow = 1, ncol = 6,
     pointSize = 0.05,
     legendKeyHeight = 1.0,
     legendLabSize = 14,
     stripLabSize = 20,
     axisLabSize = 18,
-    titleLabSize = 24,
+    titleLabSize = 20,
     captionLabSize = 22)
 
 plot_grid(exp_plot_umap, exp_plot_tsne,
@@ -256,25 +260,31 @@ plot_grid(exp_plot_umap, exp_plot_tsne,
     nrow = 2, align = "l", label_size = 24)
 ```
 
-Run consensus method of FLowSOM and ConsensusClusterPlus on all cells using a selection of markers, with a final desired cluster number of uo to 10. 
+immunoCluster provides several wrapper functions to perform unsupervised clustering on your data. Currently users can implement either Rphenograph or FlowSOM clustering. Here we have used an ensemble method of FlowSOM and ConsensusCLusterPlus, which allows us to perform a fast, high resolution clustering on our dataset. We perform the clustering on all cells using a selection of lineage markers, with a final desired cluster number of up to 10, specified by the parameter k. FlowSOM will cluster cells into 100 SOM codes defined by the (dimensions of som_x and som_y) and these will be clustered into 2-k clusters and all of these clustering results are saved as metadata in the SCE object. 
 
 ```{r run clustering, message=TRUE, eval=TRUE}
-sce_gvhd = runFlowSOM(sce_gvhd, k = 10, markers = clustering_markers)
+sce_gvhd = runFlowSOM(sce_gvhd, k = 10, markers = clustering_markers, som_x = 10, som_y = 10)
 ```
 
-```{r viz flowSOM, fig.width=11, fig.height=6, eval=TRUE}
+The clustering identities are stored in the metadata data frame. The per cell membership of the 100 SOM codes is stored under som_codes and the respective clusterings are stored under flowsom_cc_k(k=n). We can vizualise the clustering or any other metatdata on the dimnesionality plot using the function metadataPlot() (which maps to UMAP by default). We can also vizualise the abundance of each cluster as a proportion of total cells per sample using the plotAbundance() function. 
+
+```{r viz flowSOM, fig.width=12, fig.height=6, eval=TRUE}
+# Plot UMAP with flowsom k=10 clustering overlay
 fsom_k10 = metadataPlot(sce_gvhd,
     colby = 'flowsom_cc_k10',
-    title = 'flowSOM k=10',
-    legendPosition = 'top',
-    legendLabSize = 16,
-    axisLabSize = 16,
-    titleLabSize = 16,
-    subtitleLabSize = 16,
+    title = '',
+    reducedDim = 'UMAP',
+    legendPosition = 'right',
+    legendLabSize = 8,
+    axisLabSize = 10,
+    titleLabSize = 10,
+    subtitleLabSize = 1,
     captionLabSize = 16)
 
+# Specify all clusters to plot abundance for
 fsom_clusters = unique(sce_gvhd@metadata$flowsom_cc_k10)
 
+# Create boxplot of flowsom k=10 abundance 
 fsom_abundance = plotAbundance(sce_gvhd,
               clusters = fsom_clusters,
               clusterAssign = 'flowsom_cc_k10',
@@ -289,22 +299,29 @@ fsom_abundance = plotAbundance(sce_gvhd,
 
 plot_grid(fsom_k10, fsom_abundance,
     labels = c('A','B'),
-    ncol = 2, align = "l", label_size = 20)
+    ncol = 2, align = "l", label_size = 20, rel_widths = c(1.4, 1))
 ```
 
-```{r diagnostic heatmap, eval=TRUE}
+## 4. Biological annotation of the clustering
+
+The medianHeatmap() function can also be used to display the median marker expression values of each flowSOM metacluster, by specifying the metadata clustering in the grouping parameter. Here the median values are 0->1 scaled (using scale_01 = T). 
+
+```{r diagnostic heatmap, fig.width=5, fig.height=6, eval=TRUE}
 # With feature
 feature = medianHeatmap(sce_gvhd, grouping = "flowsom_cc_k10", feature = NULL, scale_01 = T)
 ```
-
+ 
+ The heatmap can inform the supposed biological identity of the clusters generated by flowSOM and consesusClusterPlus. Another way to understand which markers are enriched per cluster is by using the finMarkers() function from the scran package. Here we perform a wilcox test to understand which markers have a LogFC > 1.5 enrichment between one cluster and several others.
+ 
 ```{r enriched markers, eval=TRUE}
 library(scran)
 library(tibble)
 
+# Generate list of upregulated markers
 cytof_markers = findMarkers(assay(sce_gvhd), sce_gvhd@metadata$flowsom_cc_k10, test.type="wilcox", direction="up",lfc=1.5, pval.type="some")
 
 cluster_markers = NULL
-top_n = 3
+top_n = 3 # The number of top upregulated markers to display
 for (i in 1:length(cytof_markers)) {
   
   deg_markers = cytof_markers[[i]][1:top_n,1:2]
@@ -317,9 +334,11 @@ for (i in 1:length(cytof_markers)) {
   
 }
 
-# Top3 DEG markers per cluster
-cluster_markers
+# Show top 3 DEG markers per cluster
+head(cluster_markers)
 ```
+
+From this information we can assign identities to the clusters using the setClusterIdents() function. We feed a vector of original clusters and the new clusters we wish to assign these original cluster assignments to. The new cluster assignments will be stored in the metadata as cell_annotation. We can then assign this cell_annotation to a new metadata slot if we wish to store and reassign using setClusterIdents() again. 
 
 ```{r merge clusters, fig.width=11, fig.height=6, eval=TRUE}
 # Assignments
@@ -332,7 +351,7 @@ sce_gvhd = setClusterIdents(sce_gvhd, orig.ident = original_cluster_ident , new.
 # Vizualise in UMAP space
 cell_annotation = metadataPlot(sce_gvhd,
     colby = 'cell_annotation',
-    title = 'Annotated clusters',
+    title = '',
     legendLabSize = 8,
     axisLabSize = 20,
     titleLabSize = 20,
@@ -353,10 +372,12 @@ annotated_abundance = plotAbundance(sce_gvhd,
               captionLabSize = 18)
 
 plot_grid(cell_annotation, annotated_abundance, 
-    labels = c('A','B'),
-    ncol = 2, nrow = 1, align = "l", label_size = 20)
+    labels = c('A','B'), align = "l", label_size = 20, rel_widths = c(1.4,1))
 ```
-```{r bar plot, eval=TRUE}
+
+The plotAbundance() function additionally allows to creat bar plots but specifying graph_type = "bar". Specfying a metadata feature to split the data by will allow to levels of comparison, first plotting abundance by sample as a stacked bar and then arranging the samples by GvHD condition.  
+
+```{r bar plot, fig.width=6, fig.height=6, eval=TRUE}
 bar_plot = plotAbundance(sce_gvhd,
               graph_type = 'bar',
               clusters = annotated_clusters,
@@ -372,17 +393,26 @@ bar_plot = plotAbundance(sce_gvhd,
 bar_plot
 ```
 
-```{r final heatmap, eval=TRUE}
+Once we have defined the biological identity of our clusters we can create a final heatmap to demonstrate that the marker expression patterns are consistent with our labels. Here we use medianHeatmap to create 0->1 normalised heatmap per cluster. We can also modify the the heat bar from the default greens to a black-white gradient (using heat_bar = "greys").
+
+```{r final heatmap, fig.width=5, fig.height=6, eval=TRUE}
 # With feature
-feature = medianHeatmap(sce_gvhd, grouping = "cell_annotation", feature = NULL, scale_01 = T, heat_bar = "Greys")
+feature = medianHeatmap(sce_gvhd, 
+                        grouping = "cell_annotation",
+                        markers = clustering_markers,
+                        feature = NULL, 
+                        scale_01 = T, 
+                        heat_bar = "Greys")
 ```
 
+## 5. Differential abundance and expression analysis
 
+We can now visulaise the data by disease status to better understand the differences that may help us define biomarkers to predict GvHD status post BMT. We use metadataPlot() to split the UMAP by GvHD status by defining colkey and splitting the UMAP plot by condition with facet_wrap(~condition). Also by adding a feature parameter to the plotAbundance function we can split the boxplot by GvHD status allowing us to investigate changes changes in subset abundance by disease status or indeed, any other metadata feature slot.  
 
 ```{r cell annotations, fig.width=11, fig.height=8, eval=TRUE}
 cell_annotation_dif = metadataPlot(sce_gvhd,
     colby = 'condition',
-    title = 'UMAP labelled by GvHD status',
+    title = '',
     colkey = c(None = 'royalblue', GvHD = 'red2'),
     legendPosition = 'top',
     legendLabSize = 16,
@@ -407,17 +437,38 @@ abundance_dif = plotAbundance(sce_gvhd,
 
 plot_grid(cell_annotation_dif, abundance_dif,
     labels = c('A','B'),
-    ncol = 2, align = "l", label_size = 20)
+    ncol = 2, align = "l", label_size = 20, rel_widths = c(1.4,1), rel_heights =  c(1.2,1))
 ```
+
+Finally we can perform a wilcoxon test to see if we can detect statistically significant changes between our two experimental conditions. diffClust() a results table conatining all the DA data, we can thes use diffPlot() to generate a volcano plot, which shows us that B Cells are significantly differentially abundant between our two conditions. We can see that in our dataset it appears that there is B Cells are greatly reduced in those patients that go on to develop GvHD.
 
 ```{r abundance test, eval=TRUE}
  library(broom)
 # This need the individual values
 # This also need the right contrasts
-porportions = diffClust(sce_gvhd, 
-                        clustering = 'cell_annotation')
+diffClust_out = diffClust(sce_gvhd, 
+                        clustering = 'cell_annotation', 
+                        feature = 'condition')
 
-porportions[,c(1,14:17)]
+head(diffClust_out[,c(1,14:18)])
+
+gg_volcano = diffPlot(diffClust_out, p_val = "padj", threshold = 0.12)
+
+abundance_bcell = plotAbundance(sce_gvhd,
+              clusters = c("B Cells", "Basophils"),
+              clusterAssign = 'cell_annotation',
+              feature = 'condition',
+              colkey = c(None = 'royalblue', GvHD = 'red2'),
+              legendPosition = 'right', 
+              stripLabSize = 10,
+              axisLabSize = 14,
+              titleLabSize = 12,
+              subtitleLabSize = 10,
+              captionLabSize = 18)
+
+plot_grid(gg_volcano, abundance_bcell,
+    labels = c('A','B'),
+    ncol = 2, align = "l", label_size = 20, rel_widths = c(1.2,1))
 ```
 
 
@@ -429,12 +480,11 @@ marker_test = diffExpression(sce_gvhd,
                 feature = 'condition', # The contrast
                 clusterAssign = 'cell_annotation')
 
-sig_markers = marker_test[which(marker_test$p.value < 0.05),]
+sig_markers = marker_test[which(marker_test$p_val < 0.05),]
+head(sig_markers)
 
-sig_markers[c(1,12:14),c(13:19)]
-```
-
-```{r activation markers, eval=TRUE}
+# Does not work presently
+# diffPlot(test, p_val = "p_val", threshold = 0.05)
 
 # Difference in activation markers per cluster
 markerExpressionPerSample(sce_gvhd,
@@ -442,7 +492,7 @@ markerExpressionPerSample(sce_gvhd,
     clusters = c("CD8+ T Cells", "cDC"),
     feature = 'condition',
     clusterAssign = 'cell_annotation',
-    markers = activation_markers,
+    markers = activation_markers[3:5],
     colkey = c('royalblue', 'red2'),
     title = '',
     stripLabSize = 12,
@@ -450,22 +500,16 @@ markerExpressionPerSample(sce_gvhd,
     titleLabSize = 18,
     subtitleLabSize = 10,
     captionLabSize = 10)
-```
-
-```{r diffcyt, eval=TRUE}
-
-library(diffcyt)
-
 
 
 ```
 
-```{r subsetSCE, eval=TRUE}
+
+```{r subsetSCE, eval=FALSE}
 
 # SubsetSCE function
 
 ```
-
 
 # Session info
 ```{r session info, eval=TRUE}
