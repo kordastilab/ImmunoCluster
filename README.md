@@ -1,7 +1,7 @@
 immunoCluster
 ================
 James Opzoomer, Kevin Blighe, Jessica Timms
-2020-04-15
+2020-04-21
 
 **NOTE: THIS PACKAGE IS STILL UNDER DEVELOPMENT AND SO SOME OF THE
 FUNCTIONALITY IS NOT FULLY TESTED**
@@ -535,7 +535,7 @@ annotated_abundance = plotAbundance(sce_gvhd,
               captionLabSize = 18)
 
 plot_grid(cell_annotation, annotated_abundance, 
-    labels = c('A','B'), align = "l", label_size = 20, rel_widths = c(1.4,1))
+    labels = c('A','B'), align = "l", label_size = 20, rel_widths = c(1.5,1), rel_heights = c(1.3,1))
 ```
 
 <img src="README_files/figure-gfm/merge clusters-1.png" style="display: block; margin: auto;" />
@@ -552,7 +552,7 @@ bar_plot = plotAbundance(sce_gvhd,
               clusters = annotated_clusters,
               clusterAssign = 'cell_annotation',
               feature = 'condition',
-              legendLabSize = 8,
+              legendLabSize = 7,
               stripLabSize = 22,
               axisLabSize = 22,
               titleLabSize = 22,
@@ -599,10 +599,10 @@ cell_annotation_dif = metadataPlot(sce_gvhd,
     colby = 'condition',
     title = '',
     colkey = c(None = 'royalblue', GvHD = 'red2'),
-    legendPosition = 'top',
-    legendLabSize = 16,
-    axisLabSize = 20,
-    titleLabSize = 20,
+    legendPosition = 'right',
+    legendLabSize = 8,
+    axisLabSize = 14,
+    titleLabSize = 16,
     subtitleLabSize = 16,
     captionLabSize = 16)
 
@@ -622,7 +622,7 @@ abundance_dif = plotAbundance(sce_gvhd,
 
 plot_grid(cell_annotation_dif, abundance_dif,
     labels = c('A','B'),
-    ncol = 2, align = "l", label_size = 20, rel_widths = c(1.4,1), rel_heights =  c(1.2,1))
+    ncol = 2, align = "l", label_size = 20, rel_widths = c(1.6,1), rel_heights =  c(1.5,1))
 ```
 
 <img src="README_files/figure-gfm/cell annotations-1.png" style="display: block; margin: auto;" />
@@ -671,10 +671,17 @@ abundance_bcell = plotAbundance(sce_gvhd,
 
 plot_grid(gg_volcano, abundance_bcell,
     labels = c('A','B'),
-    ncol = 2, align = "l", label_size = 20, rel_widths = c(1.2,1))
+    ncol = 2, align = "l", label_size = 20, rel_widths = c(1,1.4))
 ```
 
 <img src="README_files/figure-gfm/abundance test-1.png" style="display: block; margin: auto;" />
+
+We can perform the same process for differential expression across all
+markers on all populations defined with the diffExpression() function.
+We can plot the results a volcano plot as before and beside we have
+plotted markerExpressionPerSample() to vizualise the median marker
+expression per sample on a set of markers on a sepcific set of defined
+clusters.
 
 ``` r
 # Need to catch errors - cluster not there causes crash
@@ -685,6 +692,7 @@ marker_test = diffExpression(sce_gvhd,
                 clusterAssign = 'cell_annotation')
 
 sig_markers = marker_test[which(marker_test$p_val < 0.05),]
+
 head(sig_markers)
 ```
 
@@ -711,11 +719,11 @@ head(sig_markers)
     ## 133 0.5922031 1.54912372 -0.96159499 0.02497468 0.5929411
 
 ``` r
-# Does not work presently
-# diffPlot(test, p_val = "p_val", threshold = 0.05)
+# Create volcano plot
+gg_volcano = diffPlot(marker_test, p_val = "p_val", threshold = 0.05)
 
 # Difference in activation markers per cluster
-markerExpressionPerSample(sce_gvhd,
+pd_expression = markerExpressionPerSample(sce_gvhd,
     caption = '',
     clusters = c("CD8+ T Cells", "cDC"),
     feature = 'condition',
@@ -728,13 +736,44 @@ markerExpressionPerSample(sce_gvhd,
     titleLabSize = 18,
     subtitleLabSize = 10,
     captionLabSize = 10)
+
+
+plot_grid(gg_volcano, pd_expression,
+    labels = c('A','B'),
+    ncol = 2, align = "l", label_size = 20, rel_widths = c(1,1.4))
 ```
 
 <img src="README_files/figure-gfm/marker test-1.png" style="display: block; margin: auto;" />
 
+# Subsetting the SCE object
+
+SCE can be subsetted for further clustering, for instance, in a
+situation when increased cluster resolution is desired. Subsetting can
+be performed using the subsetSCE() function. The function can subset
+cells on any metadata slot using conditional statements in a dplyr-style
+syntax. An couple of examples are presented below:
+
 ``` r
-# SubsetSCE function
+# Subset by patient_ID
+sce_subset = subsetSCE(sce_gvhd, patient_id %in% c("P1", "P9", "P15"))
+
+table(sce_subset@metadata$patient_id)
 ```
+
+    ## 
+    ##     P1    P15     P9 
+    ## 156422 131263  98571
+
+``` r
+# Subset by clustering idenity
+sce_cd4 = subsetSCE(sce_gvhd, cell_annotation %in% c("CD4+ T Cells", "Basophils"))
+
+table(sce_cd4@metadata$cell_annotation)
+```
+
+    ## 
+    ##    Basophils CD4+ T Cells 
+    ##         5241       101908
 
 # Session info
 
@@ -758,48 +797,48 @@ sessionInfo()
     ## [8] methods   base     
     ## 
     ## other attached packages:
-    ##  [1] broom_0.5.5                 tibble_3.0.0               
+    ##  [1] broom_0.5.6                 tibble_3.0.0               
     ##  [3] scran_1.14.6                umap_0.2.5.0               
     ##  [5] pheatmap_1.0.12             Rtsne_0.15                 
-    ##  [7] reshape2_1.4.3              limma_3.42.2               
+    ##  [7] reshape2_1.4.4              limma_3.42.2               
     ##  [9] FlowSOM_1.18.0              igraph_1.2.5               
     ## [11] ConsensusClusterPlus_1.50.0 RColorBrewer_1.1-2         
     ## [13] cowplot_1.0.0               stringr_1.4.0              
     ## [15] flowCore_1.52.1             immunoCluster_0.1.0        
     ## [17] dplyr_0.8.5                 ggrepel_0.8.2              
     ## [19] ggplot2_3.3.0               SingleCellExperiment_1.8.0 
-    ## [21] SummarizedExperiment_1.16.1 DelayedArray_0.12.2        
+    ## [21] SummarizedExperiment_1.16.1 DelayedArray_0.12.3        
     ## [23] BiocParallel_1.20.1         matrixStats_0.56.0         
     ## [25] Biobase_2.46.0              GenomicRanges_1.38.0       
     ## [27] GenomeInfoDb_1.22.1         IRanges_2.20.2             
-    ## [29] S4Vectors_0.24.3            BiocGenerics_0.32.0        
+    ## [29] S4Vectors_0.24.4            BiocGenerics_0.32.0        
     ## [31] kableExtra_1.1.0            knitr_1.28                 
     ## 
     ## loaded via a namespace (and not attached):
-    ##   [1] backports_1.1.5          plyr_1.8.6               splines_3.6.2           
-    ##   [4] fda_2.4.8.1              scater_1.14.6            digest_0.6.25           
+    ##   [1] backports_1.1.6          plyr_1.8.6               splines_3.6.2           
+    ##   [4] fda_5.1.4                scater_1.14.6            digest_0.6.25           
     ##   [7] htmltools_0.4.0          viridis_0.5.1            fansi_0.4.1             
     ##  [10] magrittr_1.5             CytoML_1.12.1            cluster_2.1.0           
     ##  [13] ks_1.11.7                readr_1.3.1              RcppParallel_5.0.0      
     ##  [16] R.utils_2.9.2            askpass_1.1              flowWorkspace_3.34.1    
     ##  [19] jpeg_0.1-8.1             colorspace_1.4-1         rvest_0.3.5             
     ##  [22] rrcov_1.5-2              xfun_0.12                crayon_1.3.4            
-    ##  [25] RCurl_1.98-1.1           jsonlite_1.6.1           hexbin_1.28.1           
-    ##  [28] graph_1.64.0             glue_1.3.2               flowClust_3.24.0        
+    ##  [25] RCurl_1.98-1.2           jsonlite_1.6.1           hexbin_1.28.1           
+    ##  [28] graph_1.64.0             glue_1.4.0               flowClust_3.24.0        
     ##  [31] gtable_0.3.0             zlibbioc_1.32.0          XVector_0.26.0          
     ##  [34] webshot_0.5.2            ggcyto_1.14.1            BiocSingular_1.2.2      
     ##  [37] IDPmisc_1.1.20           Rgraphviz_2.30.0         DEoptimR_1.0-8          
     ##  [40] scales_1.1.0             mvtnorm_1.1-0            edgeR_3.28.1            
     ##  [43] Rcpp_1.0.4               viridisLite_0.3.0        clue_0.3-57             
-    ##  [46] dqrng_0.2.1              reticulate_1.13          openCyto_1.24.0         
-    ##  [49] rsvd_1.0.3               mclust_5.4.5             tsne_0.1-3              
+    ##  [46] dqrng_0.2.1              reticulate_1.15          openCyto_1.24.0         
+    ##  [49] rsvd_1.0.3               mclust_5.4.6             tsne_0.1-3              
     ##  [52] httr_1.4.1               ellipsis_0.3.0           pkgconfig_2.0.3         
     ##  [55] XML_3.99-0.3             R.methodsS3_1.8.0        farver_2.0.3            
     ##  [58] flowViz_1.50.0           locfit_1.5-9.4           utf8_1.1.4              
     ##  [61] flowStats_3.44.0         tidyselect_1.0.0         labeling_0.3            
     ##  [64] rlang_0.4.5              munsell_0.5.0            tools_3.6.2             
     ##  [67] cli_2.0.2                generics_0.0.2           evaluate_0.14           
-    ##  [70] yaml_2.2.1               robustbase_0.93-6        purrr_0.3.3             
+    ##  [70] yaml_2.2.1               robustbase_0.93-6        purrr_0.3.4             
     ##  [73] nlme_3.1-145             RBGL_1.62.1              R.oo_1.23.0             
     ##  [76] xml2_1.3.0               compiler_3.6.2           rstudioapi_0.11         
     ##  [79] beeswarm_0.2.3           png_0.1-7                statmod_1.4.34          
@@ -810,7 +849,7 @@ sessionInfo()
     ##  [94] corpcor_1.6.9            R6_2.4.1                 latticeExtra_0.6-29     
     ##  [97] KernSmooth_2.23-16       gridExtra_2.3            vipor_0.4.5             
     ## [100] MASS_7.3-51.5            gtools_3.8.2             assertthat_0.2.1        
-    ## [103] openssl_1.4.1            withr_2.1.2              mnormt_1.5-6            
+    ## [103] openssl_1.4.1            withr_2.2.0              mnormt_1.5-6            
     ## [106] GenomeInfoDbData_1.2.2   hms_0.5.3                ncdfFlow_2.32.0         
     ## [109] grid_3.6.2               tidyr_1.0.2              DelayedMatrixStats_1.8.0
     ## [112] rmarkdown_2.1            base64enc_0.1-3          ggbeeswarm_0.6.0        

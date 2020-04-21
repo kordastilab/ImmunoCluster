@@ -372,18 +372,18 @@ annotated_abundance = plotAbundance(sce_gvhd,
               captionLabSize = 18)
 
 plot_grid(cell_annotation, annotated_abundance, 
-    labels = c('A','B'), align = "l", label_size = 20, rel_widths = c(1.4,1))
+    labels = c('A','B'), align = "l", label_size = 20, rel_widths = c(1.5,1), rel_heights = c(1.3,1))
 ```
 
 The plotAbundance() function additionally allows to creat bar plots but specifying graph_type = "bar". Specfying a metadata feature to split the data by will allow to levels of comparison, first plotting abundance by sample as a stacked bar and then arranging the samples by GvHD condition.  
 
-```{r bar plot, fig.width=6, fig.height=6, eval=TRUE}
+```{r bar plot, fig.width=6, fig.height=4, eval=TRUE}
 bar_plot = plotAbundance(sce_gvhd,
               graph_type = 'bar',
               clusters = annotated_clusters,
               clusterAssign = 'cell_annotation',
               feature = 'condition',
-              legendLabSize = 8,
+              legendLabSize = 7,
               stripLabSize = 22,
               axisLabSize = 22,
               titleLabSize = 22,
@@ -395,7 +395,7 @@ bar_plot
 
 Once we have defined the biological identity of our clusters we can create a final heatmap to demonstrate that the marker expression patterns are consistent with our labels. Here we use medianHeatmap to create 0->1 normalised heatmap per cluster. We can also modify the the heat bar from the default greens to a black-white gradient (using heat_bar = "greys").
 
-```{r final heatmap, fig.width=5, fig.height=6, eval=TRUE}
+```{r final heatmap, fig.width=4, fig.height=6, eval=TRUE}
 # With feature
 feature = medianHeatmap(sce_gvhd, 
                         grouping = "cell_annotation",
@@ -409,15 +409,15 @@ feature = medianHeatmap(sce_gvhd,
 
 We can now visulaise the data by disease status to better understand the differences that may help us define biomarkers to predict GvHD status post BMT. We use metadataPlot() to split the UMAP by GvHD status by defining colkey and splitting the UMAP plot by condition with facet_wrap(~condition). Also by adding a feature parameter to the plotAbundance function we can split the boxplot by GvHD status allowing us to investigate changes changes in subset abundance by disease status or indeed, any other metadata feature slot.  
 
-```{r cell annotations, fig.width=11, fig.height=8, eval=TRUE}
+```{r cell annotations, fig.width=11, fig.height=7, eval=TRUE}
 cell_annotation_dif = metadataPlot(sce_gvhd,
     colby = 'condition',
     title = '',
     colkey = c(None = 'royalblue', GvHD = 'red2'),
-    legendPosition = 'top',
-    legendLabSize = 16,
-    axisLabSize = 20,
-    titleLabSize = 20,
+    legendPosition = 'right',
+    legendLabSize = 8,
+    axisLabSize = 14,
+    titleLabSize = 16,
     subtitleLabSize = 16,
     captionLabSize = 16)
 
@@ -437,12 +437,12 @@ abundance_dif = plotAbundance(sce_gvhd,
 
 plot_grid(cell_annotation_dif, abundance_dif,
     labels = c('A','B'),
-    ncol = 2, align = "l", label_size = 20, rel_widths = c(1.4,1), rel_heights =  c(1.2,1))
+    ncol = 2, align = "l", label_size = 20, rel_widths = c(1.6,1), rel_heights =  c(1.5,1))
 ```
 
 Finally we can perform a wilcoxon test to see if we can detect statistically significant changes between our two experimental conditions. diffClust() a results table conatining all the DA data, we can thes use diffPlot() to generate a volcano plot, which shows us that B Cells are significantly differentially abundant between our two conditions. We can see that in our dataset it appears that there is B Cells are greatly reduced in those patients that go on to develop GvHD.
 
-```{r abundance test, eval=TRUE}
+```{r abundance test, fig.width=10, fig.height=5, eval=TRUE}
  library(broom)
 # This need the individual values
 # This also need the right contrasts
@@ -468,11 +468,12 @@ abundance_bcell = plotAbundance(sce_gvhd,
 
 plot_grid(gg_volcano, abundance_bcell,
     labels = c('A','B'),
-    ncol = 2, align = "l", label_size = 20, rel_widths = c(1.2,1))
+    ncol = 2, align = "l", label_size = 20, rel_widths = c(1,1.4))
 ```
 
+We can perform the same process for differential expression across all markers on all populations defined with the diffExpression() function. We can plot the results a volcano plot as before and beside we have plotted markerExpressionPerSample() to vizualise the median marker expression per sample on a set of markers on a sepcific set of defined clusters.
 
-```{r marker test, eval=TRUE}
+```{r marker test, fig.width=12, fig.height=7, eval=TRUE}
 # Need to catch errors - cluster not there causes crash
 marker_test = diffExpression(sce_gvhd,
                 assay = 'scaled',
@@ -481,13 +482,14 @@ marker_test = diffExpression(sce_gvhd,
                 clusterAssign = 'cell_annotation')
 
 sig_markers = marker_test[which(marker_test$p_val < 0.05),]
+
 head(sig_markers)
 
-# Does not work presently
-# diffPlot(test, p_val = "p_val", threshold = 0.05)
+# Create volcano plot
+gg_volcano = diffPlot(marker_test, p_val = "p_val", threshold = 0.05)
 
 # Difference in activation markers per cluster
-markerExpressionPerSample(sce_gvhd,
+pd_expression = markerExpressionPerSample(sce_gvhd,
     caption = '',
     clusters = c("CD8+ T Cells", "cDC"),
     feature = 'condition',
@@ -502,14 +504,30 @@ markerExpressionPerSample(sce_gvhd,
     captionLabSize = 10)
 
 
-```
-
-
-```{r subsetSCE, eval=FALSE}
-
-# SubsetSCE function
+plot_grid(gg_volcano, pd_expression,
+    labels = c('A','B'),
+    ncol = 2, align = "l", label_size = 20, rel_widths = c(1,1.4))
 
 ```
+
+# Subsetting the SCE object
+
+SCE can be subsetted for further clustering, for instance, in a situation when increased cluster resolution is desired. Subsetting can be performed using the subsetSCE() function. The function can subset cells on any metadata slot using conditional statements in a dplyr-style syntax. An couple of examples are presented below:
+
+```{r subsetting_1}
+# Subset by patient_ID
+sce_subset = subsetSCE(sce_gvhd, patient_id %in% c("P1", "P9", "P15"))
+
+table(sce_subset@metadata$patient_id)
+```
+
+```{r subsetting_2}
+# Subset by clustering idenity
+sce_cd4 = subsetSCE(sce_gvhd, cell_annotation %in% c("CD4+ T Cells", "Basophils"))
+
+table(sce_cd4@metadata$cell_annotation)
+```
+
 
 # Session info
 ```{r session info, eval=TRUE}
