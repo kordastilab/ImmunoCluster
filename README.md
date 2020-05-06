@@ -1,7 +1,7 @@
 immunoCluster
 ================
 James Opzoomer, Kevin Blighe, Jessica Timms
-2020-04-21
+2020-05-06
 
 **NOTE: THIS PACKAGE IS STILL UNDER DEVELOPMENT AND SO SOME OF THE
 FUNCTIONALITY IS NOT FULLY TESTED**
@@ -53,7 +53,7 @@ have been installed on your pc. Install immunoCluster from github here:
   # Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS="true")
 ```
 
-## 2\. Load the package and the dependancies into the R session
+## 2\. Load required packages
 
 Load necessary packages:
 
@@ -103,15 +103,16 @@ The full raw data (not used here, but which was used in the
 immunoCluster paper) is available
 [here](http://flowrepository.org/id/FR-FCM-Z244).
 
+All the data required can be downloaded from Zenodo.
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3801882.svg)](https://doi.org/10.5281/zenodo.3801882)
+
 ## 2\. Download and import data
 
-You can download all the .fcs files from zenodo here here, or
+You can download all the .fcs files from zenodo here link\_here, or
 alternatively you can download the SingleCellExperiment object directly
-into memory and skip the import process just below.
-
-``` r
-# Insert zenodo link
-```
+into memory and skip the import process just below. The fcs files can be
+downloaded from this
+[download\_link](https://zenodo.org/record/3801882/files/fcs_data.zip?download=1).
 
 The experimental design informs the what metadata we will need to
 incorporate into the SingleCellExperiment (SCE) object, here we have
@@ -119,14 +120,11 @@ created one table (from an excel file), that contains five columns, and
 one row for each .fcs file. We will include the .fcs filename, the GvHD
 “condition” of the patient, patient\_id, a unique sample\_id, and the
 day\_id representing the day following BMT that the sample was taken.
-(Link to excel file).
+[Download\_link](https://zenodo.org/record/3801882/files/sample_metadata.xlsx?download=1)
 
 ``` r
-# Excel file can be read in using this line
-#
-
-# Insert zenodo RDS link to replace local
-sample_metadata_df = readRDS(file = "../github_readme/rds_objects/sample_metadata.rds")
+# Download sample metadata from Zenodo
+sample_metadata_df = readRDS(url("https://zenodo.org/record/3801882/files/sample_metadata.rds"))
 
 head(sample_metadata_df)
 ```
@@ -150,14 +148,13 @@ sets, here we have two sets, one group of markers for clustering and
 another for downstream differential expression analysis. Any marker that
 is not included in either group will be discarded when we build the SCE
 object. This table must be an exact match to the order that the markers
-are represnted in the raw .fcs files or the . (Link to excel file).
+are represnted in the raw .fcs files or the channel renaming will be
+incorrect or fail.
+[Download\_link](https://zenodo.org/record/3801882/files/panel_metadata.xlsx?download=1).
 
 ``` r
-# Excel file can be read in using this line
-#
-
-# Insert zenodo RDS link to replace local
-panel_metadata_df = readRDS(file = "../github_readme/rds_objects/panel_metadata.rds")
+# Download panel metadata from Zenodo
+panel_metadata_df = readRDS(url("https://zenodo.org/record/3801882/files/panel_metadata.rds"))
 
 head(panel_metadata_df)
 ```
@@ -198,7 +195,7 @@ discarded.
 ``` r
 # Collect all .fcs files from a directory
 filelist = list.files(
-      path = "../github_readme/fcs_data",
+      path = "fcs_data/",
     pattern = "*.fcs|*.FCS",
     full.names = TRUE)
 
@@ -234,8 +231,8 @@ with the metatdata incorporated, directly into memory to skip the import
 steps to save time:
 
 ``` r
-# Insert zenodo RDS link
-sce_gvhd = readRDS(file = "../github_readme/rds_objects/sce_gvhd.rds")
+# Download complete ImmunoCluster SCE object from zenodo 
+sce_gvhd = readRDS(url("https://zenodo.org/record/3801882/files/sce_gvhd.rds"))
 
 sce_gvhd
 ```
@@ -511,9 +508,16 @@ new_cluster_ident = c("Monocytes", "cDC", "NKT Cells", "CD4+ T Cells", "B Cells"
 # Set the new annotations
 sce_gvhd = setClusterIdents(sce_gvhd, orig.ident = original_cluster_ident , new.ident = new_cluster_ident, clustering = 'flowsom_cc_k10')
 
+# Define population colours
+cols = brewer.pal(10, "Set3")
+
+# Assign to populations for plotting
+col_key = c("Monocytes" = cols[1], "cDC" = cols[2], "NKT Cells" = cols[3], "CD4+ T Cells" = cols[4], "B Cells" = cols[5], "gd T Cells" = cols[6], "CD8+ T Cells" = cols[7], "Basophils" = cols[8], "CD4+ Treg" = cols[9], "NK" = cols[10])
+
 # Vizualise in UMAP space
 cell_annotation = metadataPlot(sce_gvhd,
     colby = 'cell_annotation',
+    colkey = col_key, # Add colours for plotting 
     title = '',
     legendLabSize = 8,
     axisLabSize = 20,
@@ -527,6 +531,7 @@ annotated_abundance = plotAbundance(sce_gvhd,
               clusters = annotated_clusters,
               clusterAssign = 'cell_annotation',
               feature = NULL,
+              colkey = col_key,
               legendPosition = 'none', 
               stripLabSize = 10,
               axisLabSize = 14,
@@ -552,6 +557,7 @@ bar_plot = plotAbundance(sce_gvhd,
               clusters = annotated_clusters,
               clusterAssign = 'cell_annotation',
               feature = 'condition',
+              colkey = col_key,
               legendLabSize = 7,
               stripLabSize = 22,
               axisLabSize = 22,
@@ -600,6 +606,7 @@ cell_annotation_dif = metadataPlot(sce_gvhd,
     title = '',
     colkey = c(None = 'royalblue', GvHD = 'red2'),
     legendPosition = 'right',
+    pointSize = 0.3,
     legendLabSize = 8,
     axisLabSize = 14,
     titleLabSize = 16,
@@ -622,7 +629,7 @@ abundance_dif = plotAbundance(sce_gvhd,
 
 plot_grid(cell_annotation_dif, abundance_dif,
     labels = c('A','B'),
-    ncol = 2, align = "l", label_size = 20, rel_widths = c(1.6,1), rel_heights =  c(1.5,1))
+    ncol = 2, align = "l", label_size = 20, rel_widths = c(1.6,1))
 ```
 
 <img src="README_files/figure-gfm/cell annotations-1.png" style="display: block; margin: auto;" />
@@ -797,7 +804,7 @@ sessionInfo()
     ## [8] methods   base     
     ## 
     ## other attached packages:
-    ##  [1] broom_0.5.6                 tibble_3.0.0               
+    ##  [1] broom_0.5.6                 tibble_3.0.1               
     ##  [3] scran_1.14.6                umap_0.2.5.0               
     ##  [5] pheatmap_1.0.12             Rtsne_0.15                 
     ##  [7] reshape2_1.4.4              limma_3.42.2               
@@ -822,7 +829,7 @@ sessionInfo()
     ##  [13] ks_1.11.7                readr_1.3.1              RcppParallel_5.0.0      
     ##  [16] R.utils_2.9.2            askpass_1.1              flowWorkspace_3.34.1    
     ##  [19] jpeg_0.1-8.1             colorspace_1.4-1         rvest_0.3.5             
-    ##  [22] rrcov_1.5-2              xfun_0.12                crayon_1.3.4            
+    ##  [22] rrcov_1.5-2              xfun_0.13                crayon_1.3.4            
     ##  [25] RCurl_1.98-1.2           jsonlite_1.6.1           hexbin_1.28.1           
     ##  [28] graph_1.64.0             glue_1.4.0               flowClust_3.24.0        
     ##  [31] gtable_0.3.0             zlibbioc_1.32.0          XVector_0.26.0          
@@ -836,20 +843,20 @@ sessionInfo()
     ##  [55] XML_3.99-0.3             R.methodsS3_1.8.0        farver_2.0.3            
     ##  [58] flowViz_1.50.0           locfit_1.5-9.4           utf8_1.1.4              
     ##  [61] flowStats_3.44.0         tidyselect_1.0.0         labeling_0.3            
-    ##  [64] rlang_0.4.5              munsell_0.5.0            tools_3.6.2             
+    ##  [64] rlang_0.4.6              munsell_0.5.0            tools_3.6.2             
     ##  [67] cli_2.0.2                generics_0.0.2           evaluate_0.14           
     ##  [70] yaml_2.2.1               robustbase_0.93-6        purrr_0.3.4             
-    ##  [73] nlme_3.1-145             RBGL_1.62.1              R.oo_1.23.0             
-    ##  [76] xml2_1.3.0               compiler_3.6.2           rstudioapi_0.11         
+    ##  [73] nlme_3.1-147             RBGL_1.62.1              R.oo_1.23.0             
+    ##  [76] xml2_1.3.2               compiler_3.6.2           rstudioapi_0.11         
     ##  [79] beeswarm_0.2.3           png_0.1-7                statmod_1.4.34          
     ##  [82] pcaPP_1.9-73             stringi_1.4.6            RSpectra_0.16-0         
-    ##  [85] lattice_0.20-40          Matrix_1.2-18            vctrs_0.2.4             
+    ##  [85] lattice_0.20-41          Matrix_1.2-18            vctrs_0.2.4             
     ##  [88] pillar_1.4.3             lifecycle_0.2.0          BiocNeighbors_1.4.2     
     ##  [91] data.table_1.12.8        bitops_1.0-6             irlba_2.3.3             
     ##  [94] corpcor_1.6.9            R6_2.4.1                 latticeExtra_0.6-29     
-    ##  [97] KernSmooth_2.23-16       gridExtra_2.3            vipor_0.4.5             
-    ## [100] MASS_7.3-51.5            gtools_3.8.2             assertthat_0.2.1        
-    ## [103] openssl_1.4.1            withr_2.2.0              mnormt_1.5-6            
+    ##  [97] KernSmooth_2.23-17       gridExtra_2.3            vipor_0.4.5             
+    ## [100] MASS_7.3-51.6            gtools_3.8.2             assertthat_0.2.1        
+    ## [103] openssl_1.4.1            withr_2.2.0              mnormt_1.5-7            
     ## [106] GenomeInfoDbData_1.2.2   hms_0.5.3                ncdfFlow_2.32.0         
     ## [109] grid_3.6.2               tidyr_1.0.2              DelayedMatrixStats_1.8.0
     ## [112] rmarkdown_2.1            base64enc_0.1-3          ggbeeswarm_0.6.0        

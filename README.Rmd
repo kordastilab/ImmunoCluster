@@ -57,7 +57,7 @@ Install the development version of the package, installation will usually take a
   # Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS="true")
 ```
 
-## 2. Load the package and the dependancies into the R session
+## 2. Load required packages
 
 
 Load necessary packages:
@@ -92,36 +92,29 @@ We have performed gating cleanup on a subset of the dataset which can be dowload
 
 The data was originally reported in [Comprehensive Immune Monitoring of Clinical Trials to Advance Human Immunotherapy](https://www.sciencedirect.com/science/article/pii/S2211124719308228). The full raw data (not used here, but which was used in the immunoCluster paper) is available [here](http://flowrepository.org/id/FR-FCM-Z244).
 
+All the data required can be downloaded from Zenodo. [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3801882.svg)](https://doi.org/10.5281/zenodo.3801882)
+
 
 ## 2. Download and import data 
 
-You can download all the .fcs files from zenodo here here, or alternatively you can download the SingleCellExperiment object directly into memory and skip the import process just below.
+You can download all the .fcs files from zenodo here link_here, or alternatively you can download the SingleCellExperiment object directly into memory and skip the import process just below. The fcs files can be downloaded from this [download_link](https://zenodo.org/record/3801882/files/fcs_data.zip?download=1).
 
-```{r download fcs, eval=FALSE}
-# Insert zenodo link
-
-```
-
-The experimental design informs the what metadata we will need to incorporate into the SingleCellExperiment (SCE) object, here we have created one table (from an excel file), that contains five columns, and one row for each .fcs file. We will include the .fcs filename, the GvHD "condition" of the patient,  patient_id, a unique sample_id, and the day_id representing the day following BMT that the sample was taken. (Link to excel file).
+The experimental design informs the what metadata we will need to incorporate into the SingleCellExperiment (SCE) object, here we have created one table (from an excel file), that contains five columns, and one row for each .fcs file. We will include the .fcs filename, the GvHD "condition" of the patient,  patient_id, a unique sample_id, and the day_id representing the day following BMT that the sample was taken. [Download_link](https://zenodo.org/record/3801882/files/sample_metadata.xlsx?download=1)
 
 ```{r sample setup, eval=TRUE}
-# Excel file can be read in using this line
-#
 
-# Insert zenodo RDS link to replace local
-sample_metadata_df = readRDS(file = "../github_readme/rds_objects/sample_metadata.rds")
+# Download sample metadata from Zenodo
+sample_metadata_df = readRDS(url("https://zenodo.org/record/3801882/files/sample_metadata.rds"))
 
 head(sample_metadata_df)
 ```
 
-We also create a table that represents the marker panel information. This table contains a row for every channel in the original fcs file. The columns represent the original name of the channel and the channel name we want to rename it to in antigen. We then optionally include columns of binary 1 and 0s that allow us to group markers into relevant sets, here we have two sets, one group of markers for clustering and another for downstream differential expression analysis. Any marker that is not included in either group will be discarded when we build the SCE object. This table must be an exact match to the order that the markers are represnted in the raw .fcs files or the . (Link to excel file).
+We also create a table that represents the marker panel information. This table contains a row for every channel in the original fcs file. The columns represent the original name of the channel and the channel name we want to rename it to in antigen. We then optionally include columns of binary 1 and 0s that allow us to group markers into relevant sets, here we have two sets, one group of markers for clustering and another for downstream differential expression analysis. Any marker that is not included in either group will be discarded when we build the SCE object. This table must be an exact match to the order that the markers are represnted in the raw .fcs files or the channel renaming will be incorrect or fail. [Download_link](https://zenodo.org/record/3801882/files/panel_metadata.xlsx?download=1).
 
 ```{r panel setup, eval=TRUE}
-# Excel file can be read in using this line
-#
 
-# Insert zenodo RDS link to replace local
-panel_metadata_df = readRDS(file = "../github_readme/rds_objects/panel_metadata.rds")
+# Download panel metadata from Zenodo
+panel_metadata_df = readRDS(url("https://zenodo.org/record/3801882/files/panel_metadata.rds"))
 
 head(panel_metadata_df)
 
@@ -145,7 +138,7 @@ We next load the .fcs data and the metadata into the SCE object. Here the number
 
 # Collect all .fcs files from a directory
 filelist = list.files(
-      path = "../github_readme/fcs_data",
+      path = "fcs_data/",
     pattern = "*.fcs|*.FCS",
     full.names = TRUE)
 
@@ -179,8 +172,8 @@ sce_gvhd
 Using the code chunk below you can download the imported r data object with the metatdata incorporated, directly into memory to skip the import steps to save time:
 
 ```{r download rds, eval=TRUE}
-# Insert zenodo RDS link
-sce_gvhd = readRDS(file = "../github_readme/rds_objects/sce_gvhd.rds")
+# Download complete ImmunoCluster SCE object from zenodo 
+sce_gvhd = readRDS(url("https://zenodo.org/record/3801882/files/sce_gvhd.rds"))
 
 sce_gvhd
 ```
@@ -348,9 +341,16 @@ new_cluster_ident = c("Monocytes", "cDC", "NKT Cells", "CD4+ T Cells", "B Cells"
 # Set the new annotations
 sce_gvhd = setClusterIdents(sce_gvhd, orig.ident = original_cluster_ident , new.ident = new_cluster_ident, clustering = 'flowsom_cc_k10')
 
+# Define population colours
+cols = brewer.pal(10, "Set3")
+
+# Assign to populations for plotting
+col_key = c("Monocytes" = cols[1], "cDC" = cols[2], "NKT Cells" = cols[3], "CD4+ T Cells" = cols[4], "B Cells" = cols[5], "gd T Cells" = cols[6], "CD8+ T Cells" = cols[7], "Basophils" = cols[8], "CD4+ Treg" = cols[9], "NK" = cols[10])
+
 # Vizualise in UMAP space
 cell_annotation = metadataPlot(sce_gvhd,
     colby = 'cell_annotation',
+    colkey = col_key, # Add colours for plotting 
     title = '',
     legendLabSize = 8,
     axisLabSize = 20,
@@ -364,6 +364,7 @@ annotated_abundance = plotAbundance(sce_gvhd,
               clusters = annotated_clusters,
               clusterAssign = 'cell_annotation',
               feature = NULL,
+              colkey = col_key,
               legendPosition = 'none', 
               stripLabSize = 10,
               axisLabSize = 14,
@@ -383,6 +384,7 @@ bar_plot = plotAbundance(sce_gvhd,
               clusters = annotated_clusters,
               clusterAssign = 'cell_annotation',
               feature = 'condition',
+              colkey = col_key,
               legendLabSize = 7,
               stripLabSize = 22,
               axisLabSize = 22,
@@ -409,12 +411,13 @@ feature = medianHeatmap(sce_gvhd,
 
 We can now visulaise the data by disease status to better understand the differences that may help us define biomarkers to predict GvHD status post BMT. We use metadataPlot() to split the UMAP by GvHD status by defining colkey and splitting the UMAP plot by condition with facet_wrap(~condition). Also by adding a feature parameter to the plotAbundance function we can split the boxplot by GvHD status allowing us to investigate changes changes in subset abundance by disease status or indeed, any other metadata feature slot.  
 
-```{r cell annotations, fig.width=11, fig.height=7, eval=TRUE}
+```{r cell annotations, fig.width=10, fig.height=5, eval=TRUE}
 cell_annotation_dif = metadataPlot(sce_gvhd,
     colby = 'condition',
     title = '',
     colkey = c(None = 'royalblue', GvHD = 'red2'),
     legendPosition = 'right',
+    pointSize = 0.3,
     legendLabSize = 8,
     axisLabSize = 14,
     titleLabSize = 16,
@@ -437,7 +440,7 @@ abundance_dif = plotAbundance(sce_gvhd,
 
 plot_grid(cell_annotation_dif, abundance_dif,
     labels = c('A','B'),
-    ncol = 2, align = "l", label_size = 20, rel_widths = c(1.6,1), rel_heights =  c(1.5,1))
+    ncol = 2, align = "l", label_size = 20, rel_widths = c(1.6,1))
 ```
 
 Finally we can perform a wilcoxon test to see if we can detect statistically significant changes between our two experimental conditions. diffClust() a results table conatining all the DA data, we can thes use diffPlot() to generate a volcano plot, which shows us that B Cells are significantly differentially abundant between our two conditions. We can see that in our dataset it appears that there is B Cells are greatly reduced in those patients that go on to develop GvHD.
