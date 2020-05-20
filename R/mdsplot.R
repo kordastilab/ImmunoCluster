@@ -1,8 +1,42 @@
+#' @rdname mdsplot
+#' @title Create sample-level MDS plot
+#'
+#' @description Multi-Dimensional Scaling (MDS) plot computed across
+#' median marker expression in each sample or metadata grouping.
+#'
+#' @param data a \code{\link[SingleCellExperiment]{SingleCellExperiment}}.
+#' @param grouping a character string representaing which \code{metadata}
+#' slot to group the individual samples by.
+#' @param feature a character string represnting a feature to label the heatmap with.
+#' @param markers a character string specifying which markers to include.
+#' @param colkey a vector of grouping ids the colour strings to indicate the feature labelling.
+#' @param legendPosition a string for \code{ggplot2} legend position.
+#' @param legendLabSize \code{ggplot2} legend label size
+#' @param legendIconSize \code{ggplot2} legend icon size
+#' @param xlim \code{ggplot2} x limit specification
+#' @param ylim \code{ggplot2} y limit specification
+#'
+#' @author James Opzoomer \email{james.opzoomer@kcl.ac.uk}
+#'
+#' @return a \code{ggplot} object.
+#'
+#' @examples
+#' # Download complete ImmunoCluster SCE object from zenodo
+#' sce_gvhd = readRDS(url("https://zenodo.org/record/3801882/files/sce_gvhd.rds"))
+#'
+#' # Generate sample level MDS plot with all markers
+#' mdsplot(sce_gvhd, feature = "condition", colkey = c(None = 'royalblue', GvHD = 'red2'))
+#'
+#' @import ggplot2
+#' @importFrom ggrepel geom_label_repel
+#' @importFrom limma plotMDS
 #' @export
+
 mdsplot <- function(
   data,
   grouping = 'group',
   feature = NULL,
+  markers = NULL,
   colkey = NULL,
   legendPosition = 'right',
   legendLabSize = 12,
@@ -74,16 +108,22 @@ mdsplot <- function(
       title=element_text(size=legendLabSize),
       legend.title=element_blank())
 
+  if(is.null(markers) == TRUE){
+
+    markers = rownames(data)
+
+  }
+
   # Get the median marker expression per sample without normalization
   # add marker selection later
-  data.median = data.frame(sample_id = data@metadata[,grouping], t(assay(data))) %>%
-                group_by(sample_id) %>%
-                summarize_all(list(median))
+  data.median = data.frame(sample_id = data@metadata[,grouping], t(assay(data))[,markers]) %>%
+                dplyr::group_by(sample_id) %>%
+                dplyr::summarize_all(list(median))
 
   data.median.sample = t(data.median[, -1])
 
   colnames(data.median.sample) = data.median$sample_id
-  mds = plotMDS(data.median.sample, plot = FALSE)
+  mds = limma::plotMDS(data.median.sample, plot = FALSE)
   mdsdf = data.frame(MDS1 = mds$x, MDS2 = mds$y,
                     sample_id = colnames(data.median.sample))
 
@@ -92,7 +132,7 @@ mdsplot <- function(
 
     # Summarize feature
     feature.summary = data.frame(sample_id = data@metadata[,grouping], feature = data@metadata[feature]) %>%
-                      distinct()
+                      dplyr::distinct()
 
     # Match feature
     mm = match(mdsdf$sample_id, feature.summary$sample_id)
