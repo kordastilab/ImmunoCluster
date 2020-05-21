@@ -2,7 +2,8 @@
 % Please edit documentation in R/processFCS.R
 \name{processFCS}
 \alias{processFCS}
-\title{@rdname processFCS}
+\title{Import .fcs file data into a \code{\link[SingleCellExperiment]{SingleCellExperiment}}
+object with experiment metadata.}
 \usage{
 processFCS(
   files,
@@ -23,34 +24,47 @@ processFCS(
   newColnames = NULL
 )
 }
-\description{
-@title Import .fcs file data into a \code{\link[SingleCellExperiment]{SingleCellExperiment}}
- object with experiment metadata.
+\arguments{
+\item{files}{a character string representing the filenames of the .fcs files to import.}
+
+\item{assayname}{a character string to name the assay within the \code{\link[SingleCellExperiment]{SingleCellExperiment}}.}
+
+\item{metadata}{the metadata must be a dataframe where each row represents an individial .fcs file to be incorporated into
+the SCE object. The number of rows must match the number of files. Each column represents a metadata attribute stored in the SCE.}
+
+\item{filter}{a boolean of whether to perform noise filtering and normalization on the data.}
+
+\item{bgNoiseThreshold}{an numeric representing the background noise threshold to filter.}
+
+\item{euclideanNormThreshold}{an numeric as input to euclidean normalization function.}
+
+\item{transformation}{a boolean of whether to transform the data.}
+
+\item{asinhFactor}{a numeric that will be used as the cofactor in asinh transformation.}
+
+\item{downsample}{a numeric defining the number of cells to downsample to from all cells (if downsample_grouping is NULL).}
+
+\item{downsample_grouping}{a character string specifying a metadata slot from which to downsample evenly by the numeric specified in downsample.
+n downsampled cells will be chosen evenly from each downsample_grouping.}
+
+\item{downsampleVar}{a boolean defining whether to donwsample from all cells by variance. Does not work in combination with downsample_grouping.}
+
+\item{colsDiscard}{a vector of character strings of column names to discard.}
+
+\item{colsRetain}{a vector of character strings of column names to retain, inverse of colsDiscard.}
+
+\item{newColnames}{a vector of character strings to rename the channel parameters from the raw .fcs data. The order of newColnames must match the
+the exact channels to be renamed in order after filtering. If colsRetain or colsDiscard has been used to filter out certain channels this needs to be taken into
+account when renaming the subsequent filtered channel list or the new names may be attached to the wrong channels.}
+
+\item{TransFun}{a funtion to perform transformation on the data with, is by default the asinh with cofactor 5.}
 }
-\details{
-@param files a character string representing the filenames of the .fcs files to import.
- @param assayname a character string to name the assay within the \code{\link[SingleCellExperiment]{SingleCellExperiment}}.
- @param metadata the metadata must be a dataframe where each row represents an individial .fcs file to be incorporated into
- the SCE object. The number of rows must match the number of files. Each column represents a metadata attribute stored in the SCE.
- @param filter a boolean of whether to perform noise filtering and normalization on the data.
- @param bgNoiseThreshold an numeric representing the background noise threshold to filter.
- @param euclideanNormThreshold an numeric as input to euclidean normalization function.
- @param transformation a boolean of whether to transform the data.
- @param TransFun a funtion to perform transformation on the data with, is by default the asinh with cofactor 5.
- @param asinhFactor a numeric that will be used as the cofactor in asinh transformation.
- @param downsample a numeric defining the number of cells to downsample to from all cells (if downsample_grouping is NULL).
- @param downsample_grouping a character string specifying a metadata slot from which to downsample evenly by the numeric specified in downsample.
- n downsampled cells will be chosen evenly from each downsample_grouping.
- @param downsampleVar a boolean defining whether to donwsample from all cells by variance. Does not work in combination with downsample_grouping.
- @param colsDiscard a vector of character strings of column names to discard.
- @param colsRetain a vector of character strings of column names to retain, inverse of colsDiscard.
- @param newColnames a vector of character strings to rename the channel parameters from the raw .fcs data. The order of newColnames must match the
- the exact channels to be renamed in order after filtering. If colsRetain or colsDiscard has been used to filter out certain channels this needs to be taken into
- account when renaming the subsequent filtered channel list or the new names may be attached to the wrong channels.
-
- @author Kevin Blighe, James Opzoomer \email{james.opzoomer@kcl.ac.uk}
-
- @return a \code{\link[SingleCellExperiment]{SingleCellExperiment}} object.
+\value{
+a \code{\link[SingleCellExperiment]{SingleCellExperiment}} object.
+}
+\description{
+Import .fcs file data into a \code{\link[SingleCellExperiment]{SingleCellExperiment}}
+object with experiment metadata.
 }
 \examples{
 # Create SCE object with CyTOF data inside
@@ -67,4 +81,7 @@ sce_gvhd = processFCS(
  newColnames = col_names, # Rename columns from panel metadata
  colsDiscard = colsDiscard) # Discard columns not selected for downstream analysis
 
+}
+\author{
+Kevin Blighe, James Opzoomer \email{james.opzoomer@kcl.ac.uk}
 }
