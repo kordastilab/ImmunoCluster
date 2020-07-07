@@ -73,8 +73,9 @@ plotAbundance = function(
   counts_table <- table(indata@metadata[,clusterAssign], indata@metadata[,group])
 
   props_table <- t(t(counts_table) / colSums(counts_table)) * 100
-  counts <- as.data.frame.matrix(counts_table)
-  props <- as.data.frame.matrix(props_table[clusters,])
+
+  # Select the specified clusters
+  props <- as.data.frame.matrix(props_table)[clusters,]
 
   plotobj <- melt(data.frame(cluster = rownames(props), props),
                id.vars = "cluster", value.name = "proportion", variable.name = "sample_id")
