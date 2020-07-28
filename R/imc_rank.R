@@ -66,8 +66,8 @@ imc_rank <- function(
 
 
   # Create ranking for each marker and cluster
-  ranked_data.median = apply(data.median[,-1], 2, function(x) rank(x))
-  ranked_data.median = as.data.frame(cbind("sample_id" = data.median$sample_id, ranked_data.median))
+  ranked_data.median = as.data.frame(apply(data.median[,-1], 2, function(x) rank(x)))
+  ranked_data.median = cbind("sample_id" = data.median$sample_id, ranked_data.median)
 
   # reshape to matrix for heatmapping
   data.median.sample = t(ranked_data.median[, -1])
