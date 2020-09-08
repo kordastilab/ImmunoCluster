@@ -1,10 +1,7 @@
 immunoCluster
 ================
 James Opzoomer, Kevin Blighe, Jessica Timms
-2020-05-06
-
-**NOTE: THIS PACKAGE IS STILL UNDER DEVELOPMENT AND SO SOME OF THE
-FUNCTIONALITY IS NOT FULLY TESTED**
+2020-07-07
 
 ## 1\. Introduction to immunoCluster
 
@@ -822,27 +819,27 @@ sessionInfo()
     ## [31] kableExtra_1.1.0            knitr_1.28                 
     ## 
     ## loaded via a namespace (and not attached):
-    ##   [1] backports_1.1.6          plyr_1.8.6               splines_3.6.2           
+    ##   [1] backports_1.1.7          plyr_1.8.6               splines_3.6.2           
     ##   [4] fda_5.1.4                scater_1.14.6            digest_0.6.25           
     ##   [7] htmltools_0.4.0          viridis_0.5.1            fansi_0.4.1             
     ##  [10] magrittr_1.5             CytoML_1.12.1            cluster_2.1.0           
-    ##  [13] ks_1.11.7                readr_1.3.1              RcppParallel_5.0.0      
+    ##  [13] ks_1.11.7                readr_1.3.1              RcppParallel_5.0.1      
     ##  [16] R.utils_2.9.2            askpass_1.1              flowWorkspace_3.34.1    
     ##  [19] jpeg_0.1-8.1             colorspace_1.4-1         rvest_0.3.5             
     ##  [22] rrcov_1.5-2              xfun_0.13                crayon_1.3.4            
     ##  [25] RCurl_1.98-1.2           jsonlite_1.6.1           hexbin_1.28.1           
-    ##  [28] graph_1.64.0             glue_1.4.0               flowClust_3.24.0        
+    ##  [28] graph_1.64.0             glue_1.4.1               flowClust_3.24.0        
     ##  [31] gtable_0.3.0             zlibbioc_1.32.0          XVector_0.26.0          
     ##  [34] webshot_0.5.2            ggcyto_1.14.1            BiocSingular_1.2.2      
     ##  [37] IDPmisc_1.1.20           Rgraphviz_2.30.0         DEoptimR_1.0-8          
-    ##  [40] scales_1.1.0             mvtnorm_1.1-0            edgeR_3.28.1            
+    ##  [40] scales_1.1.1             mvtnorm_1.1-0            edgeR_3.28.1            
     ##  [43] Rcpp_1.0.4               viridisLite_0.3.0        clue_0.3-57             
     ##  [46] dqrng_0.2.1              reticulate_1.15          openCyto_1.24.0         
     ##  [49] rsvd_1.0.3               mclust_5.4.6             tsne_0.1-3              
-    ##  [52] httr_1.4.1               ellipsis_0.3.0           pkgconfig_2.0.3         
+    ##  [52] httr_1.4.1               ellipsis_0.3.1           pkgconfig_2.0.3         
     ##  [55] XML_3.99-0.3             R.methodsS3_1.8.0        farver_2.0.3            
     ##  [58] flowViz_1.50.0           locfit_1.5-9.4           utf8_1.1.4              
-    ##  [61] flowStats_3.44.0         tidyselect_1.0.0         labeling_0.3            
+    ##  [61] flowStats_3.44.0         tidyselect_1.1.0         labeling_0.3            
     ##  [64] rlang_0.4.6              munsell_0.5.0            tools_3.6.2             
     ##  [67] cli_2.0.2                generics_0.0.2           evaluate_0.14           
     ##  [70] yaml_2.2.1               robustbase_0.93-6        purrr_0.3.4             
@@ -850,15 +847,15 @@ sessionInfo()
     ##  [76] xml2_1.3.2               compiler_3.6.2           rstudioapi_0.11         
     ##  [79] beeswarm_0.2.3           png_0.1-7                statmod_1.4.34          
     ##  [82] pcaPP_1.9-73             stringi_1.4.6            RSpectra_0.16-0         
-    ##  [85] lattice_0.20-41          Matrix_1.2-18            vctrs_0.2.4             
-    ##  [88] pillar_1.4.3             lifecycle_0.2.0          BiocNeighbors_1.4.2     
+    ##  [85] lattice_0.20-41          Matrix_1.2-18            vctrs_0.3.0             
+    ##  [88] pillar_1.4.4             lifecycle_0.2.0          BiocNeighbors_1.4.2     
     ##  [91] data.table_1.12.8        bitops_1.0-6             irlba_2.3.3             
     ##  [94] corpcor_1.6.9            R6_2.4.1                 latticeExtra_0.6-29     
     ##  [97] KernSmooth_2.23-17       gridExtra_2.3            vipor_0.4.5             
     ## [100] MASS_7.3-51.6            gtools_3.8.2             assertthat_0.2.1        
     ## [103] openssl_1.4.1            withr_2.2.0              mnormt_1.5-7            
     ## [106] GenomeInfoDbData_1.2.2   hms_0.5.3                ncdfFlow_2.32.0         
-    ## [109] grid_3.6.2               tidyr_1.0.2              DelayedMatrixStats_1.8.0
+    ## [109] grid_3.6.2               tidyr_1.0.3              DelayedMatrixStats_1.8.0
     ## [112] rmarkdown_2.1            base64enc_0.1-3          ggbeeswarm_0.6.0        
     ## [115] ellipse_0.4.1
 

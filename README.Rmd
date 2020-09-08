@@ -11,9 +11,6 @@ fig_width: 7
 always_allow_html: true
 ---
 
-
-**NOTE: THIS PACKAGE IS STILL UNDER DEVELOPMENT AND SO SOME OF THE FUNCTIONALITY IS NOT FULLY TESTED**
-
 ## 1. Introduction to immunoCluster
 
 The immunoCluster package provides a complete toolkit to carry out immune profiling from both liquid and imaging high-dimensional mass (CyTOF) and flow cytometry. The package features standardized data infrastructure, making use of the SingleCellExperiment class object, interactive visualization tools and convenient implementations for popular dimensionality reduction and clustering algorithms designed for a non-specialist. To learn using immunoCluster we have provided walkthrough below exploring some of the package's basic functionality on a published dataset.   
