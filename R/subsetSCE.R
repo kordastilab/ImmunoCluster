@@ -22,7 +22,7 @@ subsetSCE = function(sce, ...) {
 
   # subset assays & return filtered SCE
   asssay = lapply(assays(sce), "[", i = TRUE, j = idx)
-  sce_subset = SingleCellEsceperiment(assays = asssay,
+  sce_subset = SingleCellExperiment(assays = asssay,
                        reducedDims = red_dim)
 
   metadata(sce_subset) = mdf
