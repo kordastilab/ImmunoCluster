@@ -65,10 +65,6 @@ runFlowSOM <- function(
 
     }
 
-    dlta = plot_delta_elbow(clusters)
-
-    print(dlta)
-
     return(sct)
 
 
