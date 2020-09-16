@@ -3,16 +3,16 @@ subsetSCE = function(sce, ...) {
 
   # create dataframes of sce metadata
   md = vapply(sce@metadata, as.character, character(ncol(sce)))
-  md = data.frame(i = seq_len(ncol(sce)), md,
+  md = data.frame(k = seq_len(ncol(sce)), md,
                    check.names = FALSE, stringsAsFactors = FALSE)
 
   # Subset metadata dataframe
-  mdf = try(dplyr::filter(md, ... ), silent = TRUE)
-  if (inherits(mdf, "try-error")) mdf = md
-  idx = mdf$i; mdf = select(mdf, -"i")
+  md_filter = dplyr::filter(md, ... )
+  idx = md_filter$k
+  md_filter = select(md_filter, -"k")
 
   # convert to factors
-  mdf = mutate_all(mdf, factor)
+  md_filter = mutate_all(md_filter, factor)
 
   # subset reduced dimensions
   if (length(reducedDims(sce)) > 0) {
@@ -25,7 +25,7 @@ subsetSCE = function(sce, ...) {
   sce_subset = SingleCellExperiment(assays = asssay,
                        reducedDims = red_dim)
 
-  metadata(sce_subset) = mdf
+  metadata(sce_subset) = md_filter
 
   return(sce_subset)
 
