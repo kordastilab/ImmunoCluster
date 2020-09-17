@@ -53,8 +53,8 @@ runFlowSOM <- function(
     # Create map metaclustering
     for(i in 2:k){
 
-      ## Get cluster ids for each cell for each cluster
-      code_clustering <- clusters[[i]]$consensusClass
+      ## Get the clustering ids for each cell for each cluster
+      code_clustering = clusters[[i]]$consensusClass
       flowsom_cc_clustering <- code_clustering[cell_som_mapping]
 
       identity = factor(flowsom_cc_clustering)
