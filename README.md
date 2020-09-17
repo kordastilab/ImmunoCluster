@@ -602,7 +602,7 @@ feature = medianHeatmap(sce_gvhd,
 
 <img src="README_files/figure-gfm/final heatmap-1.png" style="display: block; margin: auto;" />
 
-## 5\. Differential abundance and expression analysis
+## 5\. Statistical testing for cluster differences in abundance and marker expression
 
 We can now visualise the data by disease status to better understand the
 differences that may help us define biomarkers to predict GvHD status

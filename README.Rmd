@@ -408,7 +408,7 @@ feature = medianHeatmap(sce_gvhd,
                         heat_bar = "Greys")
 ```
 
-## 5. Differential abundance and expression analysis
+## 5. Statistical testing for cluster differences in abundance and marker expression
 
 We can now visualise the data by disease status to better understand the differences that may help us define biomarkers to predict GvHD status post BMT. We can also use the metadataPlot() function to split the UMAP by GvHD status by defining colkey and splitting the UMAP plot by condition with facet_wrap(~condition). Also by adding a feature parameter to the plotAbundance function we can split the boxplot by GvHD status allowing us to investigate changes changes in subset abundance by disease status or indeed, any other metadata feature slot.  
 
