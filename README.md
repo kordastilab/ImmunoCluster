@@ -5,7 +5,7 @@ James Opzoomer, Kevin Blighe, Jessica Timms
 
 ## 1\. Introduction to immunoCluster
 
-The immunoCluster package usese the [scDataViz bioconductor
+The immunoCluster package uses the [scDataViz bioconductor
 package’s](https://bioconductor.org/packages/devel/bioc/vignettes/scDataviz/inst/doc/scDataviz.html)
 vizualization tools and adaptation of the
 [SingleCellExperiment](https://www.bioconductor.org/packages/release/bioc/vignettes/SingleCellExperiment/inst/doc/intro.html)
