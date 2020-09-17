@@ -43,7 +43,8 @@ The basic pipeline of immunoCluster analysis involves:
 
   - Clustering and biological interpretation of the clusters
 
-  - Differential abundance and differential expression analysis
+  - Statistitcal testing for differences in cluster abundance and marker
+    expression
 
 # Installation
 
