@@ -23,18 +23,48 @@
 #' @export
 #'
 
-write_sce_to_fcs <- function(sce, filename = "export.fcs", clustering = NULL) {
+write_sce_to_fcs <- function(sce, filename = "export.fcs", clustering = NULL, reduced_dim = NULL) {
+
+  print('Extracting SCE to write to .fcs file')
 
   # Extract primary exprs from sce
   exprs = t(assay(sce))
 
+  if(is.null(reduced_dim) == FALSE){
+
+  # Extract and bind Dim_reduc
+  dim_reduc = as.data.frame(reducedDim(sce, reduced_dim))
+  exprs = cbind(exprs, dim_reduc)
+
+  }
+
   # Extract metadata and convert it to numeric
   if(is.null(clustering) == FALSE){
 
-    # Extract the clustering
-    clust_data = data@metadata[,clustering]
+    print('Extracting clustering to write to .fcs file as a parameter')
+    print('Converting all clustering to numeric')
+
+    # Extract the clustering and bind
+    clust_data = sce@metadata[,clustering]
+
+    # convert to numeric and bind
+    if(length(clustering) == 1){
+
+      clust_data = as.numeric(clust_data)
+
+    }else{
+      for(i in 1:ncol(clust_data)){
+
+        clust_data[,i] = as.numeric(clust_data[,i])
+
+     }
+    }
 
     exprs = cbind(exprs, clust_data)
+
+    if(length(clustering) == 1){
+      colnames(exprs)[length(colnames(exprs))] = clustering
+    }
   }
 
   # Combine into one data_frame
@@ -60,8 +90,8 @@ write_sce_to_fcs <- function(sce, filename = "export.fcs", clustering = NULL) {
             parameters=AnnotatedDataFrame(meta)
   )
 
+  print('Writing to .fcs file')
   write.FCS(ff, filename = filename)
 
-  return()
 }
 
