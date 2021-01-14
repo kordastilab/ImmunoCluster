@@ -5,8 +5,9 @@
 #' the data contained into an .fcs file
 #'
 #' @param sce a \code{\link[SingleCellExperiment]{SingleCellExperiment}}.
-#' @param filename the .fcs file name to export
-#' @param clustering metadata clustering slots to export as parameters in the .fcs file
+#' @param filename the .fcs file name to export, default is export.fcs
+#' @param clustering optional metadata clustering (or other) slots to export as parameters in the .fcs file
+#' @param reduced_dim optional dimensionality reduction coordinates to export as a parameters in the .fcs file
 #'
 #' @author James Opzoomer \email{james.opzoomer@kcl.ac.uk}
 #'
@@ -17,7 +18,7 @@
 #' sce_gvhd = readRDS(url("https://zenodo.org/record/3801882/files/sce_gvhd.rds"))
 #'
 #' # write sct to fcs
-#' write_sce_to_fcs(sce_gvhd)
+#' write_sce_to_fcs(sce_gvhd, filename = "export.fcs")
 #'
 #' @import flowCore
 #' @export

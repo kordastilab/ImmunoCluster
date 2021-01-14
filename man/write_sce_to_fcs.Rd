@@ -4,14 +4,21 @@
 \alias{write_sce_to_fcs}
 \title{Export an SCE to.fcs format}
 \usage{
-write_sce_to_fcs(sce, filename = "export.fcs", clustering = NULL)
+write_sce_to_fcs(
+  sce,
+  filename = "export.fcs",
+  clustering = NULL,
+  reduced_dim = NULL
+)
 }
 \arguments{
 \item{sce}{a \code{\link[SingleCellExperiment]{SingleCellExperiment}}.}
 
-\item{filename}{the .fcs file name to export}
+\item{filename}{the .fcs file name to export, default is export.fcs}
 
-\item{clustering}{metadata clustering slots to export as parameters in the .fcs file}
+\item{clustering}{optional metadata clustering (or other) slots to export as parameters in the .fcs file}
+
+\item{reduced_dim}{optional dimensionality reduction coordinates to export as a parameters in the .fcs file}
 }
 \value{
 a .fcs file
@@ -25,7 +32,7 @@ the data contained into an .fcs file
 sce_gvhd = readRDS(url("https://zenodo.org/record/3801882/files/sce_gvhd.rds"))
 
 # write sct to fcs
-write_sce_to_fcs(sce_gvhd)
+write_sce_to_fcs(sce_gvhd, filename = "export.fcs")
 
 }
 \author{
