@@ -1,4 +1,6 @@
+#' @import broom
 #' @export
+#'
 diffExpression <- function(
   indata,
   assay = 'scaled',

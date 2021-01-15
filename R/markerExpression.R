@@ -1,4 +1,48 @@
+#' @rdname markerExpression
+#'
+#' @title Generate an dotplot of a dimensionality reduction with marker expression overlaid as a heat dimension.
+#'
+#' @param indata a \code{\link[SingleCellExperiment]{SingleCellExperiment}}.
+#' @param assay the SCE assay to choose from.
+#' @param reducedDim a sting representing the dimensionality reduction stored in the SCE to plot
+#' @param markers a sting or vecotor of stings representing the markers to select for plotting
+#' @param ncol a numeric representing the number of colums to arrange the plots into
+#' @param nrow a numeric representing the number of rows to arrange the plots into
+#' @param col a vector of two strings representing the colour gradient to be used as the heat component on the expression plot
+#' @param colMidpoint a numeric representing the midpoint of the colour gradient specified in `col`, the default is 0
+#' @param pointSize a numeric specifying the point size of the dots on the plot, default is 0.5
+#' @param plotting_options The rest of the options can all found in the ggplot2 documentation. These options control various elements of the ggplot2 output.
+#'
+#' @author Kevin Blighe, James Opzoomer \email{james.opzoomer@kcl.ac.uk}
+#'
+#' @return a \code{SingleCellExperiment} object.
+#'
+#' @examples
+#' # Download complete ImmunoCluster SCE object from zenodo
+#' sce_gvhd = readRDS(url("https://zenodo.org/record/3801882/files/sce_gvhd.rds"))
+#'
+#' # Run UMAP and store in sce object
+#' sce_gvhd = performUMAP(sce_gvhd)
+#'
+#' expression_markers =  c('CD3', 'CD4', 'CD8a', 'CD11b', 'CD19', 'CD56')
+#'
+#' exp_plot_umap = markerExpression(sce_gvhd,
+#'                                 markers = expression_markers,
+#'                                 reducedDim = 'UMAP',
+#'                                 title = 'UMAP',
+#'                                 nrow = 1, ncol = 6,
+#'                                 pointSize = 0.05,
+#'                                 legendKeyHeight = 1.0,
+#'                                 legendLabSize = 14,
+#'                                 stripLabSize = 20,
+#'                                 axisLabSize = 18,
+#'                                 titleLabSize = 20,
+#'                                 captionLabSize = 22)
+#'
+#' @import reshape2
+#'
 #' @export
+#'
 markerExpression <- function(
   indata,
   layout = NULL,

@@ -1,4 +1,31 @@
+#' @rdname performUMAP
+#'
+#' @title Perform UMAP dimensionality reduction on SingleCellExperiment object
+#'
+#' @param indata a \code{\link[SingleCellExperiment]{SingleCellExperiment}}.
+#' @param assay the SCE assay to choose from.
+#' @param downsample a numeric of the number of cells to downsample by.
+#' @param downsample_grouping a character string indicating which metadata grouping to downsample by.
+#' @param reducedDim a character vector represting a dimensionality reduction slot from the SCE to be selected as input data.
+#' @param dims numeric of reduced dimensions to select from the reducedDim
+#' @param newDimName character string of the name for the resulting UMAP dimensionality reduction in the SCE object.
+#' @param useMarkers chacter vector of markers to use as input for the UMAP run.
+#'
+#' @author Kevin Blighe, James Opzoomer \email{james.opzoomer@kcl.ac.uk}
+#'
+#' @return a \code{SingleCellExperiment} object.
+#'
+#' @examples
+#' # Download complete ImmunoCluster SCE object from zenodo
+#' sce_gvhd = readRDS(url("https://zenodo.org/record/3801882/files/sce_gvhd.rds"))
+#'
+#' # Run UMAP and store in sce object
+#' sce_gvhd = performUMAP(sce_gvhd)
+#'
+#' @import umap
+#'
 #' @export
+#'
 performUMAP <- function(
   indata,
   assay = 'scaled',

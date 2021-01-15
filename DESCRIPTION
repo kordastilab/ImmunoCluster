@@ -45,6 +45,7 @@ Imports:
   Biobase,
   ConsensusClusterPlus,
   FlowSOM,
+  umap,
   Rtsne,
   pheatmap
 Suggests:

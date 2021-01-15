@@ -1,4 +1,6 @@
+#' @import broom
 #' @export
+#'
 diffClust <- function(
   sct,
   group = 'group',
