@@ -47,7 +47,8 @@ Imports:
   FlowSOM,
   umap,
   Rtsne,
-  pheatmap
+  pheatmap,
+  viridisLite
 Suggests:
   readxl,
   stringr,
