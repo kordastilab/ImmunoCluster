@@ -1,12 +1,24 @@
+#' @rdname volcanoPlot
+#'
+#' @title Generate a volcano plot using statistical testing output
+#'
+#' @param pval_df a dataframe that contains a column name "logfc" and a statistical testing output p values.
+#' @param p_val a string identifying the column name from pval_df to plot as p values
+#' @param threshold a numeric representing the p_value threshold on which to colour points on the volcano plot
+#'
+#' @author James Opzoomer \email{james.opzoomer@kcl.ac.uk}
+#'
+#' @return a \code{ggplot} object.
+#'
+#' @examples
+#'
 #' @export
-diffPlot <- function(
+#'
+volcanoPlot <- function(
   pval_df,
   p_val = "padj",
   threshold = 0.1
 ){
-
-  # Function deprecated
-  .Deprecated("volcanoPlot")
 
   # Extract plot data
   plotdf <- data.frame(logfc = pval_df$logfc, pvalue = pval_df[,p_val], cluster = pval_df$cluster)
