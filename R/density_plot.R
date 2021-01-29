@@ -3,9 +3,6 @@
 #' @title Generate a density plot of a dimensionality reduction of the SCE data
 #'
 #' @param indata a \code{\link[SingleCellExperiment]{SingleCellExperiment}}.
-#' @param assay the SCE assay to choose from.
-#' @param marker_x marker to display on the x axis
-#' @param marker_y marker to display on the y axis
 #'
 #' @author Kevin Blighe, James Opzoomer \email{james.opzoomer@kcl.ac.uk}
 #'

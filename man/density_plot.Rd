@@ -57,12 +57,6 @@ density_plot(
 }
 \arguments{
 \item{indata}{a \code{\link[SingleCellExperiment]{SingleCellExperiment}}.}
-
-\item{assay}{the SCE assay to choose from.}
-
-\item{marker_x}{marker to display on the x axis}
-
-\item{marker_y}{marker to display on the y axis}
 }
 \value{
 a \code{ggplot} object.
