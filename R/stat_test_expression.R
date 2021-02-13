@@ -1,4 +1,6 @@
 #' @import broom
+#' @import reshape2
+#'
 #' @export
 #'
 stat_test_expression <- function(
@@ -17,7 +19,7 @@ stat_test_expression <- function(
   data.median = plotobj %>% group_by( Grouping, Cluster) %>%
     summarize_all(list(median))
 
-  ## Melt
+  ## Convert the datatframe using Melt
   expr_median_sample_cluster_melt = melt(data.median,
                                          id.vars = c("Grouping", "Cluster"), value.name = "median_expression",
                                          variable.name = "antigen")
@@ -37,15 +39,45 @@ stat_test_expression <- function(
   expr_median_sample_cluster <- expr_median_sample_cluster[keep0, as.character(feature.summary$Grouping)]
 
   ## Add condition info
-  mm <- match(colnames(expr_median_sample_cluster), feature.summary$Grouping)
+  mm = match(colnames(expr_median_sample_cluster), feature.summary$Grouping)
 
 
   # Need to recover the original matrix
-  grouping_vector <- factor(feature.summary$Feature[mm])
+  grouping_vector = factor(feature.summary$Feature[mm])
 
   pval_df = NULL
 
   for(i in 1:length(rownames(expr_median_sample_cluster))){
+
+    obs_test = c()
+
+    ## Find the condition positions in the grouping vector
+    feature_variables =  unique(grouping_vector)
+
+    # Count the number fo NAs for each condition
+    for(k in 1:length(feature_variables)){
+
+      vals = expr_median_sample_cluster[i,]
+
+      # count the number of not NAs
+      idx = which(grouping_vector == feature_variables[k])
+      num_obs = sum(!is.na(vals[idx]))
+
+      # If too few obs then add FALSE to vector
+      if(num_obs > 2){
+        obs_test = c(obs_test, TRUE)
+      } else {obs_test = c(obs_test, FALSE)}
+
+
+    }
+
+    # If obs test contains a FALSE abandon the stat test and return an NA pval
+    if(FALSE %in% obs_test){
+
+      # pval is NA as too few observations in at least one condition
+      pval = data.frame(p.value = NA)
+
+    } else { # run the stat test
 
     if(test == "wilcox"){
      pval = tidy(pairwise.wilcox.test(as.numeric(expr_median_sample_cluster[i,]),
@@ -58,6 +90,7 @@ stat_test_expression <- function(
     } else{
       print("Error test not found, please select wither wilcox or t_test")
       return()
+    }
     }
 
     ord = order(grouping_vector)
