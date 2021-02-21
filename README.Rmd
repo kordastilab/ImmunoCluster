@@ -64,21 +64,9 @@ Install the development version of the package, installation will usually take a
 Load necessary packages:
 ```{r Load, eval=TRUE, results="hide"}
   library(immunoCluster)
-
-  # Load dependencies
-  require(flowCore)
   library(stringr)
   library(cowplot)
   library(RColorBrewer)
-  library(Biobase)
-  library(ConsensusClusterPlus)
-  library(FlowSOM)
-  library(limma)
-  library(ggrepel)
-  library(reshape2)
-  library(Rtsne)
-  library(dplyr)
-  library(pheatmap)
 ```
 
 # Walkthrough: Immune profiling PBMC from a two condition experimental design
@@ -205,15 +193,21 @@ feature = medianHeatmap(sce_gvhd, grouping = "group", feature = "condition", fea
 
 ## 3. Dimensionality reduction and clustering
 
-immunoCluster supports multiple different dimensionality reduction algorithms and has UMAP and tSNE functionality implemented below with the ability to downsample before running the algorithms. We run both UMAP and tSNE on selected lineage markers, downsampling to 1000 randomly selected cells per sample to reduce runtime. The dimensionality reductions are stored in the reducedDimNames slot and any other dimensionality reduction, like PCA, can also be stored in the SCE object in parallel.
+immunoCluster supports multiple different dimensionality reduction algorithms and has UMAP and tSNE functionality implemented below with the ability to downsample before running the algorithms. We run both UMAP and tSNE on selected lineage markers, downsampling to 1000 randomly selected cells per sample id 'group' metadata slot (selected by specifying a downsample_grouping metadata slot) to reduce runtime. The dimensionality reductions are stored in the reducedDimNames slot and any other dimensionality reduction, like PCA, can also be stored in the SCE object in parallel.
 
 ```{r run UMAP, message=FALSE, eval=TRUE}
 require(umap)
 # Run UMAP and store in sce object
-sce_gvhd = performUMAP(sce_gvhd, downsample = 1000, useMarkers = clustering_markers)
+sce_gvhd = performUMAP(sce_gvhd, 
+                       downsample = 1000, # Downsample to 1000 cells per downsample_grouping condition
+                       downsample_grouping = "group", # Downsample by sample id 'group' metadata slot
+                       useMarkers = clustering_markers) # Run UMAP only on selected markers
 
 # Run tSNE and store in sce object
-sce_gvhd = performTSNE(sce_gvhd, downsample = 1000, useMarkers = clustering_markers)
+sce_gvhd = performTSNE(sce_gvhd, 
+                       downsample = 1000, # Downsample to 1000 cells per downsample_grouping condition
+                       downsample_grouping = "group",  # Downsample by sample id 'group' metadata slot
+                       useMarkers = clustering_markers) # Run UMAP only on selected markers
 
 sce_gvhd
 ```
@@ -444,19 +438,19 @@ plot_grid(cell_annotation_dif, abundance_dif,
     ncol = 2, align = "l", label_size = 20, rel_widths = c(1.6,1))
 ```
 
-Finally we can perform a wilcoxon rank sum test to see if we can detect statistically significant changes between our two experimental conditions. diffClust() will perform the wilcoxon test on our data and produce a results table along with Log fold change and the proportion of each sample that each cluster represents. We can thes use diffPlot() to generate a volcano plot, which shows us that there is a significant difference between the abundance of B cells between our two conditions. We can see that in our dataset it appears that B Cells are markedly reduced in those patients that go on to develop GvHD.
+Finally we can perform a wilcoxon rank sum test to see if we can detect statistically significant changes between our two experimental conditions. stat_test_clust_results() will perform the wilcoxon test on our data and produce a results table along with Log fold change and the proportion of each sample that each cluster represents. We can thes use volcanoPlot() to generate a volcano plot, which shows us that there is a significant difference between the abundance of B cells between our two conditions. We can see that in our dataset it appears that B Cells are markedly reduced in those patients that go on to develop GvHD.
 
 ```{r abundance test, fig.width=10, fig.height=5, eval=TRUE}
- library(broom)
 # This need the individual values
 # This also need the right contrasts
-diffClust_out = diffClust(sce_gvhd, 
-                        clustering = 'cell_annotation', 
+stat_test_clust_results = stat_test_clust(sce_gvhd,
+                        group = 'group', # group the files by sample ID metadata slot 'group'
+                        clustering = 'cell_annotation', # The clustering label to use
                         feature = 'condition')
 
-head(diffClust_out[,c(1,14:18)])
+head(stat_test_clust_results[,c(1,14:18)])
 
-gg_volcano = diffPlot(diffClust_out, p_val = "padj", threshold = 0.12)
+gg_volcano = volcanoPlot(stat_test_clust_results, p_val = "padj", threshold = 0.12)
 
 abundance_bcell = plotAbundance(sce_gvhd,
               clusters = c("B Cells", "Basophils"),
@@ -475,22 +469,22 @@ plot_grid(gg_volcano, abundance_bcell,
     ncol = 2, align = "l", label_size = 20, rel_widths = c(1,1.4))
 ```
 
-We can perform the same process of applying a wilcoxon test for expression levels of markers, across all markers on all populations by using the diffExpression() function. We can plot the results a volcano plot as before using diffPlot(). Beside this can vizualise this cluster specific expression of certain makers with markerExpressionPerSample() to look at the median marker expression per sample on these clusters (or all clusters!).
+We can perform the same process of applying a wilcoxon test for expression levels of markers, across all markers on all populations by using the stat_test_expression() function. We can plot the results a volcano plot as before using volcanoPlot(). Beside this can vizualise this cluster specific expression of certain makers with markerExpressionPerSample() to look at the median marker expression per sample on these clusters (or all clusters).
 
 ```{r marker test, fig.width=12, fig.height=7, eval=TRUE}
 # Need to catch errors - cluster not there causes crash
-marker_test = diffExpression(sce_gvhd,
-                assay = 'scaled',
-                grouping = 'group', # The condensing function
-                feature = 'condition', # The contrast
-                clusterAssign = 'cell_annotation')
+marker_test = stat_test_expression(sce_gvhd,
+                assay = 'scaled', # The sce assay slot
+                grouping = 'group', # group the files by sample ID metadata slot 'group'
+                feature = 'condition', # The contrast metatdata
+                clusterAssign = 'cell_annotation') # The clustering label to use
 
 sig_markers = marker_test[which(marker_test$p_val < 0.05),]
 
 head(sig_markers)
 
 # Create volcano plot
-gg_volcano = diffPlot(marker_test, p_val = "p_val", threshold = 0.05)
+gg_volcano = volcanoPlot(marker_test, p_val = "p_val", threshold = 0.05)
 
 # Difference in activation markers per cluster
 pd_expression = markerExpressionPerSample(sce_gvhd,
@@ -542,4 +536,4 @@ sessionInfo()
 
 For any queries relating to software:
 
-* James W Opzoomer (james.opzoomer@kcl.ac.uk)
+* Jessica Timms (jessica.timms@kcl.ac.uk)

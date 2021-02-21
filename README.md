@@ -1,7 +1,7 @@
 immunoCluster
 ================
 James Opzoomer, Kevin Blighe, Jessica Timms
-2020-09-17
+2021-02-21
 
 ## 1\. Introduction to immunoCluster
 
@@ -71,21 +71,9 @@ Load necessary packages:
 
 ``` r
   library(immunoCluster)
-
-  # Load dependencies
-  require(flowCore)
   library(stringr)
   library(cowplot)
   library(RColorBrewer)
-  library(Biobase)
-  library(ConsensusClusterPlus)
-  library(FlowSOM)
-  library(limma)
-  library(ggrepel)
-  library(reshape2)
-  library(Rtsne)
-  library(dplyr)
-  library(pheatmap)
 ```
 
 # Walkthrough: Immune profiling PBMC from a two condition experimental design
@@ -314,18 +302,25 @@ immunoCluster supports multiple different dimensionality reduction
 algorithms and has UMAP and tSNE functionality implemented below with
 the ability to downsample before running the algorithms. We run both
 UMAP and tSNE on selected lineage markers, downsampling to 1000 randomly
-selected cells per sample to reduce runtime. The dimensionality
-reductions are stored in the reducedDimNames slot and any other
-dimensionality reduction, like PCA, can also be stored in the SCE object
-in parallel.
+selected cells per sample id ‘group’ metadata slot (selected by
+specifying a downsample\_grouping metadata slot) to reduce runtime. The
+dimensionality reductions are stored in the reducedDimNames slot and any
+other dimensionality reduction, like PCA, can also be stored in the SCE
+object in parallel.
 
 ``` r
 require(umap)
 # Run UMAP and store in sce object
-sce_gvhd = performUMAP(sce_gvhd, downsample = 1000, useMarkers = clustering_markers)
+sce_gvhd = performUMAP(sce_gvhd, 
+                       downsample = 1000, # Downsample to 1000 cells per downsample_grouping condition
+                       downsample_grouping = "group", # Downsample by sample id 'group' metadata slot
+                       useMarkers = clustering_markers) # Run UMAP only on selected markers
 
 # Run tSNE and store in sce object
-sce_gvhd = performTSNE(sce_gvhd, downsample = 1000, useMarkers = clustering_markers)
+sce_gvhd = performTSNE(sce_gvhd, 
+                       downsample = 1000, # Downsample to 1000 cells per downsample_grouping condition
+                       downsample_grouping = "group",  # Downsample by sample id 'group' metadata slot
+                       useMarkers = clustering_markers) # Run UMAP only on selected markers
 
 sce_gvhd
 ```
@@ -650,23 +645,23 @@ plot_grid(cell_annotation_dif, abundance_dif,
 
 Finally we can perform a wilcoxon rank sum test to see if we can detect
 statistically significant changes between our two experimental
-conditions. diffClust() will perform the wilcoxon test on our data and
-produce a results table along with Log fold change and the proportion of
-each sample that each cluster represents. We can thes use diffPlot() to
-generate a volcano plot, which shows us that there is a significant
-difference between the abundance of B cells between our two conditions.
-We can see that in our dataset it appears that B Cells are markedly
-reduced in those patients that go on to develop GvHD.
+conditions. stat\_test\_clust\_results() will perform the wilcoxon test
+on our data and produce a results table along with Log fold change and
+the proportion of each sample that each cluster represents. We can thes
+use volcanoPlot() to generate a volcano plot, which shows us that there
+is a significant difference between the abundance of B cells between our
+two conditions. We can see that in our dataset it appears that B Cells
+are markedly reduced in those patients that go on to develop GvHD.
 
 ``` r
- library(broom)
 # This need the individual values
 # This also need the right contrasts
-diffClust_out = diffClust(sce_gvhd, 
-                        clustering = 'cell_annotation', 
+stat_test_clust_results = stat_test_clust(sce_gvhd,
+                        group = 'group', # group the files by sample ID metadata slot 'group'
+                        clustering = 'cell_annotation', # The clustering label to use
                         feature = 'condition')
 
-head(diffClust_out[,c(1,14:18)])
+head(stat_test_clust_results[,c(1,14:18)])
 ```
 
     ##        cluster proportion proportion.1       logfc       pval      padj
@@ -678,7 +673,7 @@ head(diffClust_out[,c(1,14:18)])
     ## 6          cDC  0.8772951    2.0589283 -0.85309741 0.07816909 0.3908454
 
 ``` r
-gg_volcano = diffPlot(diffClust_out, p_val = "padj", threshold = 0.12)
+gg_volcano = volcanoPlot(stat_test_clust_results, p_val = "padj", threshold = 0.12)
 
 abundance_bcell = plotAbundance(sce_gvhd,
               clusters = c("B Cells", "Basophils"),
@@ -701,19 +696,19 @@ plot_grid(gg_volcano, abundance_bcell,
 
 We can perform the same process of applying a wilcoxon test for
 expression levels of markers, across all markers on all populations by
-using the diffExpression() function. We can plot the results a volcano
-plot as before using diffPlot(). Beside this can vizualise this cluster
-specific expression of certain makers with markerExpressionPerSample()
-to look at the median marker expression per sample on these clusters (or
-all clusters\!).
+using the stat\_test\_expression() function. We can plot the results a
+volcano plot as before using volcanoPlot(). Beside this can vizualise
+this cluster specific expression of certain makers with
+markerExpressionPerSample() to look at the median marker expression per
+sample on these clusters (or all clusters).
 
 ``` r
 # Need to catch errors - cluster not there causes crash
-marker_test = diffExpression(sce_gvhd,
-                assay = 'scaled',
-                grouping = 'group', # The condensing function
-                feature = 'condition', # The contrast
-                clusterAssign = 'cell_annotation')
+marker_test = stat_test_expression(sce_gvhd,
+                assay = 'scaled', # The sce assay slot
+                grouping = 'group', # group the files by sample ID metadata slot 'group'
+                feature = 'condition', # The contrast metatdata
+                clusterAssign = 'cell_annotation') # The clustering label to use
 
 sig_markers = marker_test[which(marker_test$p_val < 0.05),]
 
@@ -744,7 +739,7 @@ head(sig_markers)
 
 ``` r
 # Create volcano plot
-gg_volcano = diffPlot(marker_test, p_val = "p_val", threshold = 0.05)
+gg_volcano = volcanoPlot(marker_test, p_val = "p_val", threshold = 0.05)
 
 # Difference in activation markers per cluster
 pd_expression = markerExpressionPerSample(sce_gvhd,
@@ -824,65 +819,87 @@ sessionInfo()
     ## [8] methods   base     
     ## 
     ## other attached packages:
-    ##  [1] broom_0.7.0                 tibble_3.0.3               
-    ##  [3] scran_1.14.6                umap_0.2.6.0               
-    ##  [5] pheatmap_1.0.12             Rtsne_0.15                 
-    ##  [7] reshape2_1.4.4              limma_3.42.2               
-    ##  [9] FlowSOM_1.18.0              igraph_1.2.5               
-    ## [11] ConsensusClusterPlus_1.50.0 RColorBrewer_1.1-2         
-    ## [13] cowplot_1.0.0               stringr_1.4.0              
-    ## [15] flowCore_1.52.1             immunoCluster_0.1.0        
-    ## [17] dplyr_1.0.1                 ggrepel_0.8.2              
-    ## [19] ggplot2_3.3.2               SingleCellExperiment_1.8.0 
-    ## [21] SummarizedExperiment_1.16.1 DelayedArray_0.12.3        
-    ## [23] BiocParallel_1.20.1         matrixStats_0.56.0         
-    ## [25] Biobase_2.46.0              GenomicRanges_1.38.0       
-    ## [27] GenomeInfoDb_1.22.1         IRanges_2.20.2             
-    ## [29] S4Vectors_0.24.4            BiocGenerics_0.32.0        
-    ## [31] kableExtra_1.1.0            knitr_1.28                 
+    ##  [1] tibble_3.0.4                scran_1.14.6               
+    ##  [3] umap_0.2.7.0                RColorBrewer_1.1-2         
+    ##  [5] cowplot_1.1.1               stringr_1.4.0              
+    ##  [7] immunoCluster_0.1.0         dplyr_1.0.2                
+    ##  [9] ggrepel_0.9.0               ggplot2_3.3.3              
+    ## [11] SingleCellExperiment_1.8.0  SummarizedExperiment_1.16.1
+    ## [13] DelayedArray_0.12.3         BiocParallel_1.20.1        
+    ## [15] matrixStats_0.57.0          Biobase_2.46.0             
+    ## [17] GenomicRanges_1.38.0        GenomeInfoDb_1.22.1        
+    ## [19] IRanges_2.20.2              S4Vectors_0.24.4           
+    ## [21] BiocGenerics_0.32.0         kableExtra_1.1.0           
+    ## [23] knitr_1.28                 
     ## 
     ## loaded via a namespace (and not attached):
-    ##   [1] backports_1.1.8          plyr_1.8.6               splines_3.6.2           
-    ##   [4] fda_5.1.5.1              scater_1.14.6            digest_0.6.25           
-    ##   [7] htmltools_0.4.0          viridis_0.5.1            fansi_0.4.1             
-    ##  [10] magrittr_1.5             CytoML_1.12.1            cluster_2.1.0           
-    ##  [13] ks_1.11.7                readr_1.3.1              RcppParallel_5.0.2      
-    ##  [16] R.utils_2.9.2            askpass_1.1              flowWorkspace_3.34.1    
-    ##  [19] jpeg_0.1-8.1             colorspace_1.4-1         rvest_0.3.5             
-    ##  [22] rrcov_1.5-5              xfun_0.13                crayon_1.3.4            
-    ##  [25] RCurl_1.98-1.2           jsonlite_1.7.0           hexbin_1.28.1           
-    ##  [28] graph_1.64.0             glue_1.4.1               flowClust_3.24.0        
-    ##  [31] gtable_0.3.0             zlibbioc_1.32.0          XVector_0.26.0          
-    ##  [34] webshot_0.5.2            ggcyto_1.14.1            BiocSingular_1.2.2      
-    ##  [37] IDPmisc_1.1.20           Rgraphviz_2.30.0         DEoptimR_1.0-8          
-    ##  [40] scales_1.1.1             mvtnorm_1.1-1            edgeR_3.28.1            
-    ##  [43] Rcpp_1.0.5               viridisLite_0.3.0        clue_0.3-57             
-    ##  [46] dqrng_0.2.1              reticulate_1.16          openCyto_1.24.0         
-    ##  [49] rsvd_1.0.3               mclust_5.4.6             tsne_0.1-3              
-    ##  [52] httr_1.4.1               ellipsis_0.3.1           pkgconfig_2.0.3         
-    ##  [55] XML_3.99-0.3             R.methodsS3_1.8.0        farver_2.0.3            
-    ##  [58] flowViz_1.50.0           locfit_1.5-9.4           utf8_1.1.4              
-    ##  [61] flowStats_3.44.0         tidyselect_1.1.0         labeling_0.3            
-    ##  [64] rlang_0.4.7              munsell_0.5.0            tools_3.6.2             
-    ##  [67] cli_2.0.2                generics_0.0.2           evaluate_0.14           
-    ##  [70] yaml_2.2.1               robustbase_0.93-6        purrr_0.3.4             
-    ##  [73] RBGL_1.62.1              R.oo_1.23.0              xml2_1.3.2              
-    ##  [76] compiler_3.6.2           rstudioapi_0.11          beeswarm_0.2.3          
-    ##  [79] png_0.1-7                statmod_1.4.34           pcaPP_1.9-73            
-    ##  [82] stringi_1.4.6            RSpectra_0.16-0          lattice_0.20-41         
-    ##  [85] Matrix_1.2-18            vctrs_0.3.2              pillar_1.4.6            
-    ##  [88] lifecycle_0.2.0          BiocNeighbors_1.4.2      data.table_1.12.8       
-    ##  [91] bitops_1.0-6             irlba_2.3.3              corpcor_1.6.9           
-    ##  [94] R6_2.4.1                 latticeExtra_0.6-29      KernSmooth_2.23-17      
-    ##  [97] gridExtra_2.3            vipor_0.4.5              MASS_7.3-51.6           
-    ## [100] gtools_3.8.2             assertthat_0.2.1         openssl_1.4.2           
-    ## [103] withr_2.2.0              mnormt_1.5-7             GenomeInfoDbData_1.2.2  
-    ## [106] hms_0.5.3                ncdfFlow_2.32.0          grid_3.6.2              
-    ## [109] tidyr_1.1.1              DelayedMatrixStats_1.8.0 rmarkdown_2.3           
-    ## [112] base64enc_0.1-3          ggbeeswarm_0.6.0         ellipse_0.4.2
+    ##   [1] backports_1.2.1             plyr_1.8.6                 
+    ##   [3] igraph_1.2.6                ConsensusClusterPlus_1.50.0
+    ##   [5] splines_3.6.2               flowCore_1.52.1            
+    ##   [7] fda_5.1.9                   scater_1.14.6              
+    ##   [9] digest_0.6.27               htmltools_0.4.0            
+    ##  [11] viridis_0.5.1               fansi_0.4.1                
+    ##  [13] magrittr_2.0.1              CytoML_1.12.1              
+    ##  [15] cluster_2.1.0               ks_1.11.7                  
+    ##  [17] hdrcde_3.3                  limma_3.42.2               
+    ##  [19] readr_1.3.1                 RcppParallel_5.0.2         
+    ##  [21] R.utils_2.10.1              askpass_1.1                
+    ##  [23] fds_1.8                     flowWorkspace_3.34.1       
+    ##  [25] jpeg_0.1-8.1                colorspace_2.0-0           
+    ##  [27] rvest_0.3.5                 rrcov_1.5-5                
+    ##  [29] xfun_0.13                   crayon_1.3.4               
+    ##  [31] RCurl_1.98-1.2              jsonlite_1.7.2             
+    ##  [33] hexbin_1.28.2               graph_1.64.0               
+    ##  [35] glue_1.4.2                  flowClust_3.24.0           
+    ##  [37] gtable_0.3.0                zlibbioc_1.32.0            
+    ##  [39] XVector_0.26.0              webshot_0.5.2              
+    ##  [41] ggcyto_1.14.1               BiocSingular_1.2.2         
+    ##  [43] IDPmisc_1.1.20              Rgraphviz_2.30.0           
+    ##  [45] DEoptimR_1.0-8              scales_1.1.1               
+    ##  [47] pheatmap_1.0.12             mvtnorm_1.1-1              
+    ##  [49] edgeR_3.28.1                Rcpp_1.0.5                 
+    ##  [51] viridisLite_0.3.0           tmvnsim_1.0-2              
+    ##  [53] clue_0.3-58                 dqrng_0.2.1                
+    ##  [55] reticulate_1.18             rsvd_1.0.3                 
+    ##  [57] openCyto_1.24.0             mclust_5.4.7               
+    ##  [59] FlowSOM_1.18.0              tsne_0.1-3                 
+    ##  [61] httr_1.4.1                  ellipsis_0.3.1             
+    ##  [63] rainbow_3.6                 farver_2.0.3               
+    ##  [65] pkgconfig_2.0.3             XML_3.99-0.3               
+    ##  [67] R.methodsS3_1.8.1           flowViz_1.50.0             
+    ##  [69] locfit_1.5-9.4              utf8_1.1.4                 
+    ##  [71] flowStats_3.44.0            tidyselect_1.1.0           
+    ##  [73] labeling_0.4.2              rlang_0.4.10               
+    ##  [75] reshape2_1.4.4              munsell_0.5.0              
+    ##  [77] tools_3.6.2                 cli_2.2.0                  
+    ##  [79] generics_0.1.0              broom_0.7.3                
+    ##  [81] evaluate_0.14               yaml_2.2.1                 
+    ##  [83] robustbase_0.93-7           purrr_0.3.4                
+    ##  [85] RBGL_1.62.1                 R.oo_1.24.0                
+    ##  [87] xml2_1.3.2                  compiler_3.6.2             
+    ##  [89] rstudioapi_0.13             beeswarm_0.2.3             
+    ##  [91] png_0.1-7                   statmod_1.4.34             
+    ##  [93] pcaPP_1.9-73                stringi_1.5.3              
+    ##  [95] RSpectra_0.16-0             lattice_0.20-41            
+    ##  [97] Matrix_1.2-18               vctrs_0.3.6                
+    ##  [99] pillar_1.4.7                lifecycle_0.2.0            
+    ## [101] BiocNeighbors_1.4.2         irlba_2.3.3                
+    ## [103] data.table_1.13.6           bitops_1.0-6               
+    ## [105] corpcor_1.6.9               R6_2.5.0                   
+    ## [107] latticeExtra_0.6-29         KernSmooth_2.23-17         
+    ## [109] gridExtra_2.3               vipor_0.4.5                
+    ## [111] MASS_7.3-51.6               gtools_3.8.2               
+    ## [113] assertthat_0.2.1            openssl_1.4.3              
+    ## [115] withr_2.3.0                 mnormt_2.0.2               
+    ## [117] GenomeInfoDbData_1.2.2      hms_0.5.3                  
+    ## [119] ncdfFlow_2.32.0             grid_3.6.2                 
+    ## [121] tidyr_1.1.2                 DelayedMatrixStats_1.8.0   
+    ## [123] rmarkdown_2.3               Rtsne_0.15                 
+    ## [125] base64enc_0.1-3             ggbeeswarm_0.6.0           
+    ## [127] ellipse_0.4.2
 
 # Contact
 
 For any queries relating to software:
 
-  - James W Opzoomer (<james.opzoomer@kcl.ac.uk>)
+  - Jessica Timms (<jessica.timms@kcl.ac.uk>)
