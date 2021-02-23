@@ -83,9 +83,8 @@ write_sce_to_fcs <- function(sce, filename = "export.fcs", clustering = NULL, re
 
   mat.dta <- as.matrix(dta)
 
-  # all these are required for the following steps to work
-
-  # a flowFrame is the internal representation of a FCS file
+  # All these parameters are required to build the flowframe
+  # The flowFrame is the internal representation of a FCS file
   ff = new("flowFrame",
             exprs=mat.dta,
             parameters=AnnotatedDataFrame(meta)
