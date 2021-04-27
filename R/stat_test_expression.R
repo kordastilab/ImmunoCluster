@@ -88,7 +88,7 @@ stat_test_expression <- function(
                                        g = grouping_vector,
                                        paired = F, alternative = "two.sided", pool.sd = F, p.adjust.method = "none"))
     } else{
-      print("Error test not found, please select wither wilcox or t_test")
+      print("Error: Test not found, please select available test 'wilcox'")
       return()
     }
     }
