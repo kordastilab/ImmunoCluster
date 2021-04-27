@@ -9,7 +9,8 @@ stat_test_expression <- function(
   grouping = 'group', # The condensing function
   feature = 'condition', # The contrast
   clusterAssign = 'cell_annotation', # The clustering
-  test = "wilcox"
+  test = "wilcox",
+  var_equal = TRUE
 ){
 
   plotobj <- data.frame(Cluster = indata@metadata[,clusterAssign],
@@ -86,9 +87,9 @@ stat_test_expression <- function(
     } else if(test == "t_test"){
       pval = tidy(pairwise.t.test(as.numeric(expr_median_sample_cluster[i,]),
                                        g = grouping_vector,
-                                       paired = F, alternative = "two.sided", pool.sd = F, p.adjust.method = "none"))
+                                       paired = F, alternative = "two.sided", pool.sd = var_equal, p.adjust.method = "none"))
     } else{
-      print("Error: Test not found, please select available test 'wilcox'")
+      print("Error: Test not found, please select available test 'wilcox' or 't_test'")
       return()
     }
     }

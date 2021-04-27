@@ -8,7 +8,8 @@ stat_test_clust <- function(
   feature = 'condition',
   p_val = 'padj',
   threshold = 0.1,
-  test = "wilcox"
+  test = "wilcox",
+  var_equal = TRUE
 ){
 
   ## Create the props table
@@ -52,10 +53,10 @@ stat_test_clust <- function(
       # data = pop_split_df[[i]],
       p_val = tidy(pairwise.t.test(x = pop_split_df[[i]]$proportion,
                                         g = pop_split_df[[i]]$condition,
-                                        paired = F, alternative = "two.sided", pool.sd = F, p.adjust.method = "none"))
+                                        paired = F, alternative = "two.sided", pool.sd = var_equal, p.adjust.method = "none"))
 
     } else{
-      print("Error: Test not found, please select available test 'wilcox'")
+      print("Error: Test not found, please select available test 'wilcox' or 't_test'")
       return()
     }
 
