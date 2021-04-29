@@ -8,11 +8,12 @@
 #' @param som_x a numeric indicating the x dimension of the som grid, see FLowSOM documentation.
 #' @param som_y a numeric indicating the y dimension of the som grid.
 #' @param set_seed a numeric to set the random seed for run reproducibility.
-#' @param scale a boolean indicating whether to scale the input data by marker.
+#' @param scale a boolean indicating whether to scale the input data by marker, a parameter to the flowSOM ReadInput command.
 #'
 #' @author James Opzoomer \email{james.opzoomer@kcl.ac.uk}
 #'
-#' @return a \code{SingleCellExperiment} object.
+#' @return a \code{SingleCellExperiment} object with new metadata slots representing consensus clustering of the flowSOM codes from 2 to k.
+#'
 #'
 #' @examples
 #' # Download complete ImmunoCluster SCE object from zenodo

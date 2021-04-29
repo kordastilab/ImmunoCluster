@@ -27,10 +27,10 @@ runFlowSOM(
 
 \item{set_seed}{a numeric to set the random seed for run reproducibility.}
 
-\item{scale}{a boolean indicating whether to scale the input data by marker.}
+\item{scale}{a boolean indicating whether to scale the input data by marker, a parameter to the flowSOM ReadInput command.}
 }
 \value{
-a \code{SingleCellExperiment} object.
+a \code{SingleCellExperiment} object with new metadata slots representing consensus clustering of the flowSOM codes from 2 to k.
 }
 \description{
 Perform combined FlowSOM clustering followed by consensus clustering as outlined in Nowicka et al. (2017) F1000Research.
