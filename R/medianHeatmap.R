@@ -14,14 +14,21 @@ medianHeatmap <- function(
   # 01 scale the data
   if(scale_01 == TRUE){
 
-    expr = t(assay(data))
+    # Extract the expression
+    expr <- t(assay(data))
 
-    rng <- colQuantiles(expr, probs = c(0.01, 0.99))
-    expr01 <- t((t(expr) - rng[, 1]) / (rng[, 2] - rng[, 1]))
-    expr01[expr01 < 0] <- 0
-    expr01[expr01 > 1] <- 1
+    # Take the upper-lower quantile
+    col_quant <- colQuantiles(expr, probs = c(0.01, 0.99))
 
-    expr = expr01
+    # Scale to min max
+    scaled_expression_mat <- t((t(expr) - col_quant[, 1]) / (col_quant[, 2] - col_quant[, 1]))
+
+    # set upper lower bounds
+    scaled_expression_mat[scaled_expression_mat < 0] <- 0
+    scaled_expression_mat[scaled_expression_mat > 1] <- 1
+
+    # Return expression
+    expr = scaled_expression_mat
 
   } else {
 
