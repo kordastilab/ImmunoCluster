@@ -1,3 +1,16 @@
+#' @rdname runPhenograph
+#'
+#' @title run Rphenograph implementation from "JinmiaoChenLab/Rphenograph" clustering on sce expression data
+#'
+#' @param sce a \code{\link[SingleCellExperiment]{SingleCellExperiment}}.
+#' @param k a number of desired clusters to cluster cell data into.
+#' @param markers a vector of selected markers, representing sce colnames to use for clustering
+#' @param set_seed set the random seed for clustering reproducibility
+#'
+#' @return a \code{SingleCellExperiment} object with a new metadata slot with cluster identities.
+#'
+#' @import Rphenograph
+#'
 #' @export
 runPhenograph <- function(
   sce,
