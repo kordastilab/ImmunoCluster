@@ -1,3 +1,20 @@
+#' @rdname stat_test_expression
+#'
+#' @title Perform statistical test on median expression values across clusters and conditions.
+#' Generates p adjusted values with "BH" p.adjust method.
+#'
+#' @param indata a \code{\link[SingleCellExperiment]{SingleCellExperiment}}.
+#' @param assay the assay to select from the sce.
+#' @param grouping the sample_ids to generate the median expression from.
+#' @param feature the feature to test the median expression data between.
+#' @param clusterAssign the clustering to generate the median expression from.
+#' @param test either 'wilcox' calls pairwise.wilcox.test or 't_test' calls pairwise.t.test.
+#' @param var_equal sets the pool.sd parameter to apply welch's correction as a parameter of pairwise.t.test
+#'
+#' @return a dataframe containing the median marker expression per cluster-marker and sample
+#' along with pval and BH adjusted pvalue.
+#'
+#'
 #' @import broom
 #' @import reshape2
 #'
@@ -13,38 +30,43 @@ stat_test_expression <- function(
   var_equal = TRUE
 ){
 
-  plotobj <- data.frame(Cluster = indata@metadata[,clusterAssign],
+  # Extract the data from the sce
+  plotobj = data.frame(Cluster = indata@metadata[,clusterAssign],
                         Grouping = indata@metadata[,grouping],
                         as.data.frame(t(as.matrix(assay(indata)))))
 
+  # Create the median expression values
   data.median = plotobj %>% group_by( Grouping, Cluster) %>%
     summarize_all(list(median))
 
-  ## Convert the datatframe using Melt
-  expr_median_sample_cluster_melt = melt(data.median,
-                                         id.vars = c("Grouping", "Cluster"), value.name = "median_expression",
-                                         variable.name = "antigen")
+  # Convert the dataframe using melt function
+  df_median_melt = melt(data.median,
+                        id.vars = c("Grouping", "Cluster"),
+                        value.name = "median_expression",
+                        variable.name = "antigen")
 
-  ## Rearange so the rows represent clusters and markers
-  expr_median_sample_cluster <- dcast(expr_median_sample_cluster_melt,
+  # Rearrange the data structure so the rows represent clusters and markers
+  expr_median_sample_cluster = dcast(df_median_melt,
                                       Cluster + antigen ~ Grouping, value.var = "median_expression")
-  rownames(expr_median_sample_cluster) <- paste0(expr_median_sample_cluster$Cluster,
+
+  # Generate rownames with cluster antigen combined
+  rownames(expr_median_sample_cluster) = paste0(expr_median_sample_cluster$Cluster,
                                                  "_", expr_median_sample_cluster$antigen)
 
   # Summarize sampleID to metadata feature
   feature.summary = data.frame(Grouping = indata@metadata[,grouping], Feature = indata@metadata[,feature]) %>%
     distinct()
 
-  ## Eliminate cases with zero expression in all samples
-  keep0 <- rowSums(as.data.frame(expr_median_sample_cluster[, as.character(feature.summary$Grouping)]), na.rm = TRUE) > 0
-  expr_median_sample_cluster <- expr_median_sample_cluster[keep0, as.character(feature.summary$Grouping)]
+  # Get rid of antigen cluster combos with no expression
+  rows_keep = rowSums(as.data.frame(expr_median_sample_cluster[, as.character(feature.summary$Grouping)]), na.rm = TRUE) > 0
+  expr_median_sample_cluster = expr_median_sample_cluster[rows_keep, as.character(feature.summary$Grouping)]
 
-  ## Add condition info
-  mm = match(colnames(expr_median_sample_cluster), feature.summary$Grouping)
+  # Add condition info
+  match_idx = match(colnames(expr_median_sample_cluster), feature.summary$Grouping)
 
 
   # Need to recover the original matrix
-  grouping_vector = factor(feature.summary$Feature[mm])
+  grouping_vector = factor(feature.summary$Feature[match_idx])
 
   pval_df = NULL
 
@@ -52,7 +74,7 @@ stat_test_expression <- function(
 
     obs_test = c()
 
-    ## Find the condition positions in the grouping vector
+    # Find the condition positions in the grouping vector
     feature_variables =  unique(grouping_vector)
 
     # Count the number fo NAs for each condition
