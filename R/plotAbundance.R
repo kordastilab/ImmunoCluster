@@ -89,10 +89,10 @@ plotAbundance = function(
     distinct()
 
   ## Add condition info
-  mm <- match(plotobj$sample_id, feature.summary$Grouping)
+  match_idx <- match(plotobj$sample_id, feature.summary$Grouping)
 
   # Need to recover the original matrix
-  plotobj$condition <- factor(feature.summary$feat[mm])
+  plotobj$condition <- factor(feature.summary$feat[match_idx])
 
   if(graph_type == 'bar'){
 
