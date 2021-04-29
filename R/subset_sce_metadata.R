@@ -1,3 +1,17 @@
+#' @rdname subset_sce_metadata
+#'
+#' @title @title Subset the sce object based on a column of the metadata table
+#'
+#' @param sce a \code{\link[SingleCellExperiment]{SingleCellExperiment}}.
+#' @param ... a conditional statement to subset the SCE by metadata slot.
+#'
+#' @return a subsetted sce \code{\link[SingleCellExperiment]{SingleCellExperiment}}.
+#'
+#' @examples
+#'
+#'  # Subset the sce_gvhd object based on the 'cell_annotation' label in the metadata table
+#'  sce_cd4 = subset_sce_metadata(sce_gvhd, cell_annotation %in% c("CD4+ T Cells", "Basophils"))
+#'
 #' @export
 subset_sce_metadata = function(sce, ...) {
 
