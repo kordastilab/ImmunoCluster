@@ -10,6 +10,9 @@
 #' @param test either 'wilcox' calls pairwise.wilcox.test or 't_test' calls pairwise.t.test.
 #' @param var_equal sets the pool.sd parameter to apply welch's correction as a parameter of pairwise.t.test
 #'
+#' @returns a dataframe containing the aubundance proportions per group of each cluster
+#' along with pval and BH adjusted pvalue.
+#'
 #' @import broom
 #' @export
 #'

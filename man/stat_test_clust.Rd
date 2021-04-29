@@ -27,6 +27,10 @@ stat_test_clust(
 
 \item{var_equal}{sets the pool.sd parameter to apply welch's correction as a parameter of pairwise.t.test}
 }
+\value{
+a dataframe containing the aubundance proportions per group of each cluster
+along with pval and BH adjusted pvalue.
+}
 \description{
 Perform statistical test on cluster abundances as a proportion of total cells within a sample across conditions.
 Generates p adjusted values with "BH" p.adjust method.
