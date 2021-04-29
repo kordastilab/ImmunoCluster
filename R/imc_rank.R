@@ -83,8 +83,8 @@ imc_rank <- function(
       distinct()
 
     # Match feature
-    mm = match(colnames(data.median.sample), feature.summary$sample_id)
-    annotation_col = data.frame(feature = feature.summary$feat[mm],
+    match_idx = match(colnames(data.median.sample), feature.summary$sample_id)
+    annotation_col = data.frame(feature = feature.summary$feat[match_idx],
                                 row.names = colnames(data.median.sample))
 
     # If feature Cols is not NULL then do the ggplot hues function
