@@ -1,3 +1,15 @@
+#' @rdname stat_test_clust
+#'
+#' @title Perform statistical test on cluster abundances as a proportion of total cells within a sample across conditions.
+#' Generates p adjusted values with "BH" p.adjust method.
+#'
+#' @param sct a \code{\link[SingleCellExperiment]{SingleCellExperiment}}.
+#' @param group the sample_id to generate the calculate the cluster abundance proportions from.
+#' @param clustering the clustering to the cluster abundance proportions from.
+#' @param feature the metadata condition to test the cluster abundance proportions between.
+#' @param test either 'wilcox' calls pairwise.wilcox.test or 't_test' calls pairwise.t.test.
+#' @param var_equal sets the pool.sd parameter to apply welch's correction as a parameter of pairwise.t.test
+#'
 #' @import broom
 #' @export
 #'
@@ -6,37 +18,38 @@ stat_test_clust <- function(
   group = 'group',
   clustering = 'cell_annotation',
   feature = 'condition',
-  p_val = 'padj',
-  threshold = 0.1,
   test = "wilcox",
   var_equal = TRUE
 ){
 
-  ## Create the props table
-  counts_table = table(sct@metadata[clustering][,1], sct@metadata[,group])
+  # count by cluster and sample specified in group
+  cell_counts_tbl = table(sct@metadata[clustering][,1], sct@metadata[,group])
 
-  props_table = t(t(counts_table) / colSums(counts_table)) * 100
-  counts = as.data.frame.matrix(counts_table)
-  props = as.data.frame.matrix(props_table)
+  # turn the counts into proportion table
+  cell_proportion_tbl = t(t(cell_counts_tbl) / colSums(cell_counts_tbl)) * 100
 
-  ggdf = melt(data.frame(cluster = rownames(props), props),
+  # Convert to dataframe
+  cell_proportion_df = as.data.frame.matrix(cell_proportion_tbl)
+
+  # Generate cell proportions dataframe
+  prop_abundance_df = melt(data.frame(cluster = rownames(cell_proportion_df), cell_proportion_df),
                id.vars = "cluster", value.name = "proportion", variable.name = "sample_id")
-  ggdf$cluster = factor(ggdf$cluster)
-  ggdf$sample_id = gsub("X", "", ggdf$sample_id)
+
+  prop_abundance_df$cluster = factor(prop_abundance_df$cluster)
+  prop_abundance_df$sample_id = gsub("X", "", prop_abundance_df$sample_id)
 
   # Summarize sampleID to metadata feature
   feature.summary = data.frame(sample_id = sct@metadata[,group], feature = sct@metadata[,feature]) %>%
     distinct()
 
-  ## Add condition info
-  mm = match(ggdf$sample_id, feature.summary$sample_id)
-
+  # Add condition info
+  match_idx = match(prop_abundance_df$sample_id, feature.summary$sample_id)
 
   # Need to recover the original matrix
-  ggdf$condition = factor(feature.summary$feature[mm])
+  prop_abundance_df$condition = factor(feature.summary$feature[match_idx])
 
   # Perform statistical testing
-  pop_split_df = split(ggdf, ggdf$cluster)
+  pop_split_df = split(prop_abundance_df, prop_abundance_df$cluster)
 
   pval_df = data.frame(cluster = NULL, pval = NULL, padj = NULL)
 
