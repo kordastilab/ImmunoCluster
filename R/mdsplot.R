@@ -135,8 +135,8 @@ mdsplot <- function(
                       dplyr::distinct()
 
     # Match feature
-    mm = match(mdsdf$sample_id, feature.summary$sample_id)
-    mdsdf[,feature] = as.factor(feature.summary[,feature][mm])
+    match_idx = match(mdsdf$sample_id, feature.summary$sample_id)
+    mdsdf[,feature] = as.factor(feature.summary[,feature][match_idx])
 
     # Plot
     mds = ggplot(mdsdf, aes_string(x = "MDS1", y = "MDS2", color = feature)) +
