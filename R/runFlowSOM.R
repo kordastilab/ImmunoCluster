@@ -65,25 +65,28 @@ runFlowSOM <- function(
     sct@metadata$som_codes = cell_som_mapping
 
     # extract codes for cc_plus
-    codes = som$map$codes
+    fsom_codes = som$map$codes
 
-    plot_outdir = "consensusC_plus_plots"
+    # Where are the plots going to be put
+    cc_plotting_dir = "cc_plus_elbow_plots"
 
     pdf(NULL)
-    # Run consensus clsuter plus
-    clusters = suppressMessages(ConsensusClusterPlus(t(codes), maxK = k, reps = 100,
-                               pItem = 0.9, pFeature = 1, title = plot_outdir, plot = "png",
+    # Run consensus cluster plus
+    clusters = suppressMessages(ConsensusClusterPlus(t(fsom_codes), maxK = k, reps = 100,
+                               pItem = 0.9, pFeature = 1, title = cc_plotting_dir, plot = "png",
                                clusterAlg = "hc", innerLinkage = "average", finalLinkage = "average",
                                distance = "euclidean", seed = 1234))
      dev.off()
 
 
-    # Create map metaclustering
+    # Create the metadata map of the metaclustering
     for(i in 2:k){
 
-      ## Get the clustering ids for each cell for each cluster
-      code_clustering = clusters[[i]]$consensusClass
-      flowsom_cc_clustering <- code_clustering[cell_som_mapping]
+      # Retrieve the clustering ids for each cell for each cluster
+      fsom_metaclustering <- clusters[[i]]$consensusClass
+
+      # Retrieve the cell_cluster alignments
+      flowsom_cc_clustering <- fsom_metaclustering[cell_som_mapping]
 
       identity = factor(flowsom_cc_clustering)
 
