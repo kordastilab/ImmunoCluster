@@ -2,7 +2,7 @@
 % Please edit documentation in R/subset_sce_metadata.R
 \name{subset_sce_metadata}
 \alias{subset_sce_metadata}
-\title{@title Subset the sce object based on a column of the metadata table}
+\title{Subset the sce object based on a column of the metadata table}
 \usage{
 subset_sce_metadata(sce, ...)
 }
@@ -15,7 +15,7 @@ subset_sce_metadata(sce, ...)
 a subsetted sce \code{\link[SingleCellExperiment]{SingleCellExperiment}}.
 }
 \description{
-@title Subset the sce object based on a column of the metadata table
+Subset the sce object based on a column of the metadata table
 }
 \examples{
 

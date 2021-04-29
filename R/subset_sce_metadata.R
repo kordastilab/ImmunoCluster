@@ -1,6 +1,6 @@
 #' @rdname subset_sce_metadata
 #'
-#' @title @title Subset the sce object based on a column of the metadata table
+#' @title Subset the sce object based on a column of the metadata table
 #'
 #' @param sce a \code{\link[SingleCellExperiment]{SingleCellExperiment}}.
 #' @param ... a conditional statement to subset the SCE by metadata slot.
