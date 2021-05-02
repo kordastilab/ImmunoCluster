@@ -164,7 +164,7 @@ Using the code chunk below you can download the processed r data object with the
 # Download complete immunoCluster SCE object from zenodo 
 # Some versions of R can timeout the download at 60 seconds
 # If the download is taking longer run the below line to extend the download timeout window to 400 seconds 
-# options(timeout = 400)
+options(timeout = 400)
 sce_gvhd = readRDS(url("https://zenodo.org/record/3801882/files/sce_gvhd.rds"))
 
 sce_gvhd
@@ -444,8 +444,8 @@ plot_grid(cell_annotation_dif, abundance_dif,
 Finally we can perform a wilcoxon rank sum test to see if we can detect statistically significant changes in cluster abundance between our two experimental conditions. stat_test_clust_results() will perform a wilcox test on our the proportions of cell type abundance per sample between conditions and produce a results table along with Log fold change and the proportion of each sample that each cluster represents. We can then use volcanoPlot() to generate a volcano plot, which shows us that there is a significant difference between the abundance of B cells between our two conditions. We can see that in our dataset it appears that B Cells are markedly reduced in those patients that go on to develop GvHD. In addition to the wilcox test implemented here there are other useful packages that implement robust statistical methods for differential abundance and differential expression analysis, such as the bioconductor packages [diffCyt](https://www.bioconductor.org/packages/release/bioc/html/diffcyt.html) and  [cydar](https://bioconductor.org/packages/release/bioc/html/cydar.html).  
 
 ```{r abundance test, fig.width=10, fig.height=5, eval=TRUE}
-# This need the individual values
-# This also need the right contrasts
+
+# Wilcox test on cluster proportion abundance
 stat_test_clust_results = stat_test_clust(sce_gvhd,
                         group = 'group', # group the files by sample ID metadata slot 'group'
                         clustering = 'cell_annotation', # The clustering label to use
@@ -475,7 +475,8 @@ plot_grid(gg_volcano, abundance_bcell,
 We can perform the same process of applying a wilcoxon test for expression levels of markers, across all markers on all populations by using the stat_test_expression() function. We can plot the results a volcano plot as before using volcanoPlot(). Aditoionally it is possible to vizualise cluster specific expression of certain makers with markerExpressionPerSample() to look at the median marker expression per sample on selected clusters (or all clusters).
 
 ```{r marker test, fig.width=12, fig.height=7, eval=TRUE}
-# Need to catch errors - cluster not there causes crash
+
+# Wilcox test on marker expression
 marker_test = stat_test_expression(sce_gvhd,
                 assay = 'scaled', # The sce assay slot
                 grouping = 'group', # group the files by sample ID metadata slot 'group'
@@ -513,18 +514,18 @@ plot_grid(gg_volcano, pd_expression,
 
 # Subsetting the SCE object
 
-It is possible to subset the SCE object for further clustering, for instance, in a situation when increased cluster resolution is desired or where you want to display the proportion of a certain cluster as a percentage of another parent populations, for instance CD4+ Tregs as a proportion of all CD4+ T cells. Subsetting can be performed using the subsetSCE() function. The function can subset the SCE cells on any specified metadata slot using using conditional statements and a couple of examples are presented below:
+It is possible to subset the SCE object for further clustering, for instance, in a situation when increased cluster resolution is desired or where you want to display the proportion of a certain cluster as a percentage of another parent populations, for instance CD4+ Tregs as a proportion of all CD4+ T cells. Subsetting can be performed using the subset_sce_metadata() function. The function can subset the SCE cells on any specified metadata slot using using conditional statements and a couple of examples are presented below:
 
 ```{r subsetting_1}
 # Subset by patient_ID
-sce_subset = subsetSCE(sce_gvhd, patient_id %in% c("P1", "P9", "P15"))
+sce_subset = subset_sce_metadata(sce_gvhd, patient_id %in% c("P1", "P9", "P15"))
 
 table(sce_subset@metadata$patient_id)
 ```
 
 ```{r subsetting_2}
 # Subset by clustering identity
-sce_cd4 = subsetSCE(sce_gvhd, cell_annotation %in% c("CD4+ T Cells", "Basophils"))
+sce_cd4 = subset_sce_metadata(sce_gvhd, cell_annotation %in% c("CD4+ T Cells", "Basophils"))
 
 table(sce_cd4@metadata$cell_annotation)
 ```

@@ -1,7 +1,7 @@
 immunoCluster
 ================
 James Opzoomer, Kevin Blighe, Jessica Timms
-2021-04-27
+2021-05-02
 
 -   [1. Introduction to immunoCluster](#1-introduction-to-immunocluster)
 -   [2. Main functionalities of
@@ -260,7 +260,7 @@ steps to save time:
 # Download complete immunoCluster SCE object from zenodo 
 # Some versions of R can timeout the download at 60 seconds
 # If the download is taking longer run the below line to extend the download timeout window to 400 seconds 
-# options(timeout = 400)
+options(timeout = 400)
 sce_gvhd = readRDS(url("https://zenodo.org/record/3801882/files/sce_gvhd.rds"))
 
 sce_gvhd
@@ -689,8 +689,7 @@ and
 [cydar](https://bioconductor.org/packages/release/bioc/html/cydar.html).
 
 ``` r
-# This need the individual values
-# This also need the right contrasts
+# Wilcox test on cluster proportion abundance
 stat_test_clust_results = stat_test_clust(sce_gvhd,
                         group = 'group', # group the files by sample ID metadata slot 'group'
                         clustering = 'cell_annotation', # The clustering label to use
@@ -738,7 +737,7 @@ markerExpressionPerSample() to look at the median marker expression per
 sample on selected clusters (or all clusters).
 
 ``` r
-# Need to catch errors - cluster not there causes crash
+# Wilcox test on marker expression
 marker_test = stat_test_expression(sce_gvhd,
                 assay = 'scaled', # The sce assay slot
                 grouping = 'group', # group the files by sample ID metadata slot 'group'
@@ -806,13 +805,13 @@ instance, in a situation when increased cluster resolution is desired or
 where you want to display the proportion of a certain cluster as a
 percentage of another parent populations, for instance CD4+ Tregs as a
 proportion of all CD4+ T cells. Subsetting can be performed using the
-subsetSCE() function. The function can subset the SCE cells on any
-specified metadata slot using using conditional statements and a couple
-of examples are presented below:
+subset\_sce\_metadata() function. The function can subset the SCE cells
+on any specified metadata slot using using conditional statements and a
+couple of examples are presented below:
 
 ``` r
 # Subset by patient_ID
-sce_subset = subsetSCE(sce_gvhd, patient_id %in% c("P1", "P9", "P15"))
+sce_subset = subset_sce_metadata(sce_gvhd, patient_id %in% c("P1", "P9", "P15"))
 
 table(sce_subset@metadata$patient_id)
 ```
@@ -823,7 +822,7 @@ table(sce_subset@metadata$patient_id)
 
 ``` r
 # Subset by clustering identity
-sce_cd4 = subsetSCE(sce_gvhd, cell_annotation %in% c("CD4+ T Cells", "Basophils"))
+sce_cd4 = subset_sce_metadata(sce_gvhd, cell_annotation %in% c("CD4+ T Cells", "Basophils"))
 
 table(sce_cd4@metadata$cell_annotation)
 ```
@@ -887,39 +886,40 @@ sessionInfo()
     ##  [35] rsvd_1.0.5                  igraph_1.2.6               
     ##  [37] gtable_0.3.0                glue_1.4.2                 
     ##  [39] GenomeInfoDbData_1.2.4      flowWorkspace_4.2.0        
-    ##  [41] reshape2_1.4.4              ggcyto_1.18.0              
-    ##  [43] Rcpp_1.0.6                  vctrs_0.3.7                
-    ##  [45] svglite_2.0.0               DelayedMatrixStats_1.12.3  
-    ##  [47] xfun_0.22                   beachmat_2.6.4             
-    ##  [49] rvest_1.0.0                 irlba_2.3.3                
-    ##  [51] lifecycle_1.0.0             statmod_1.4.35             
-    ##  [53] XML_3.99-0.6                edgeR_3.32.1               
-    ##  [55] zlibbioc_1.36.0             scales_1.1.1               
-    ##  [57] RProtoBufLib_2.2.0          RBGL_1.66.0                
-    ##  [59] yaml_2.2.1                  curl_4.3                   
-    ##  [61] aws.signature_0.6.0         reticulate_1.19            
-    ##  [63] gridExtra_2.3               latticeExtra_0.6-29        
-    ##  [65] stringi_1.5.3               highr_0.8                  
-    ##  [67] flowCore_2.2.0              BiocParallel_1.24.1        
-    ##  [69] rlang_0.4.10                pkgconfig_2.0.3            
-    ##  [71] systemfonts_1.0.1           bitops_1.0-6               
-    ##  [73] evaluate_0.14               lattice_0.20-41            
-    ##  [75] purrr_0.3.4                 labeling_0.4.2             
-    ##  [77] tidyselect_1.1.0            plyr_1.8.6                 
-    ##  [79] magrittr_2.0.1              R6_2.5.0                   
-    ##  [81] generics_0.1.0              DelayedArray_0.16.3        
-    ##  [83] DBI_1.1.1                   pillar_1.6.0               
-    ##  [85] withr_2.4.2                 RCurl_1.98-1.3             
-    ##  [87] FlowSOM_1.22.0              tsne_0.1-3                 
-    ##  [89] crayon_1.4.1                utf8_1.2.1                 
-    ##  [91] rmarkdown_2.7               aws.s3_0.3.21              
-    ##  [93] jpeg_0.1-8.1                locfit_1.5-9.4             
-    ##  [95] grid_4.0.4                  data.table_1.14.0          
-    ##  [97] Rgraphviz_2.34.0            ConsensusClusterPlus_1.54.0
-    ##  [99] digest_0.6.27               webshot_0.5.2              
-    ## [101] tidyr_1.1.3                 openssl_1.4.3              
-    ## [103] RcppParallel_5.1.2          munsell_0.5.0              
-    ## [105] viridisLite_0.4.0           askpass_1.1
+    ##  [41] RANN_2.6.1                  reshape2_1.4.4             
+    ##  [43] ggcyto_1.18.0               Rcpp_1.0.6                 
+    ##  [45] vctrs_0.3.7                 svglite_2.0.0              
+    ##  [47] DelayedMatrixStats_1.12.3   xfun_0.22                  
+    ##  [49] beachmat_2.6.4              rvest_1.0.0                
+    ##  [51] irlba_2.3.3                 lifecycle_1.0.0            
+    ##  [53] statmod_1.4.35              XML_3.99-0.6               
+    ##  [55] edgeR_3.32.1                zlibbioc_1.36.0            
+    ##  [57] scales_1.1.1                RProtoBufLib_2.2.0         
+    ##  [59] RBGL_1.66.0                 yaml_2.2.1                 
+    ##  [61] curl_4.3                    aws.signature_0.6.0        
+    ##  [63] reticulate_1.19             gridExtra_2.3              
+    ##  [65] latticeExtra_0.6-29         stringi_1.5.3              
+    ##  [67] highr_0.8                   Rphenograph_0.99.1         
+    ##  [69] flowCore_2.2.0              BiocParallel_1.24.1        
+    ##  [71] rlang_0.4.10                pkgconfig_2.0.3            
+    ##  [73] systemfonts_1.0.1           bitops_1.0-6               
+    ##  [75] evaluate_0.14               lattice_0.20-41            
+    ##  [77] purrr_0.3.4                 labeling_0.4.2             
+    ##  [79] tidyselect_1.1.0            plyr_1.8.6                 
+    ##  [81] magrittr_2.0.1              R6_2.5.0                   
+    ##  [83] generics_0.1.0              DelayedArray_0.16.3        
+    ##  [85] DBI_1.1.1                   pillar_1.6.0               
+    ##  [87] withr_2.4.2                 RCurl_1.98-1.3             
+    ##  [89] FlowSOM_1.22.0              tsne_0.1-3                 
+    ##  [91] crayon_1.4.1                utf8_1.2.1                 
+    ##  [93] rmarkdown_2.7               aws.s3_0.3.21              
+    ##  [95] jpeg_0.1-8.1                locfit_1.5-9.4             
+    ##  [97] grid_4.0.4                  data.table_1.14.0          
+    ##  [99] Rgraphviz_2.34.0            ConsensusClusterPlus_1.54.0
+    ## [101] digest_0.6.27               webshot_0.5.2              
+    ## [103] tidyr_1.1.3                 openssl_1.4.3              
+    ## [105] RcppParallel_5.1.2          munsell_0.5.0              
+    ## [107] viridisLite_0.4.0           askpass_1.1
 
 # Contact
 
