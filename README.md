@@ -1,7 +1,7 @@
 immunoCluster
 ================
 James Opzoomer, Kevin Blighe, Jessica Timms
-2021-05-02
+2021-05-05
 
 -   [1. Introduction to immunoCluster](#1-introduction-to-immunocluster)
 -   [2. Main functionalities of
@@ -26,6 +26,7 @@ James Opzoomer, Kevin Blighe, Jessica Timms
 -   [Subsetting the SCE object](#subsetting-the-sce-object)
 -   [Session info](#session-info)
 -   [Contact](#contact)
+-   [References](#references)
 
 ## 1. Introduction to immunoCluster
 
@@ -33,25 +34,29 @@ The immunoCluster package uses the [scDataViz bioconductor
 package’s](https://bioconductor.org/packages/devel/bioc/vignettes/scDataviz/inst/doc/scDataviz.html)
 vizualization tools and adaptation of the
 [SingleCellExperiment](https://www.bioconductor.org/packages/release/bioc/vignettes/SingleCellExperiment/inst/doc/intro.html)
-data structure to build simple and flexible cytometry analysis workflows
-like those outlined in Nowicka et al. (2017) [CyTOF workflow:
-differential discovery in high-throughput high-dimensional cytometry
-datasets](https://f1000research.com/articles/6-748).
+data structure to generate simple and flexible cytometry analysis
+workflows, building on the framework originally outlined in Nowicka et
+al. [CyTOF workflow: differential discovery in high-throughput
+high-dimensional cytometry
+datasets](https://f1000research.com/articles/6-748), which is also
+extended to build cytometry analysis pipelines in the
+[CATALYST](https://www.bioconductor.org/packages/release/bioc/html/CATALYST.html)
+bioconductor package.
 
-The package provides a broad toolkit to carry out immune profiling from
-both liquid and imaging high-dimensional mass (CyTOF) and flow cytometry
-data. immunoCluster features standardized data infrastructure, making
-use of the SingleCellExperiment class object, scDataViz interactive
-visualization tools along with convenient implementations for popular
-dimensionality reduction and clustering algorithms designed for a
-non-specialist. To learn using immunoCluster we have provided a
-walkthrough below exploring some of the package’s basic functionality on
-a published dataset.
+The immunoCluster package provides a broad toolkit to carry out immune
+profiling from both liquid and imaging high-dimensional mass (CyTOF) and
+flow cytometry data. immunoCluster features standardized data
+infrastructure, making use of the SingleCellExperiment class object,
+scDataViz interactive visualization tools along with convenient
+implementations for popular dimensionality reduction and clustering
+algorithms designed for a non-specialist. To learn using immunoCluster
+we have provided a walkthrough below exploring some of the package’s
+basic functionality on a published dataset.
 
 An in depth report of immunoCluster’s use to create liquid and imaging
 mass cytometry analysis pipelines, as well as its use for fluorescent
-flow cytometry analysis is outlined in our recent preprint
-[here](https://www.biorxiv.org/content/10.1101/2020.09.09.289033v1).
+flow cytometry analysis is outlined in our recent paper in [eLife
+here](https://elifesciences.org/articles/62915).
 
 ## 2. Main functionalities of immunoCluster
 
@@ -283,13 +288,15 @@ We provide several functions to examine global patterns within the data,
 they can be used to get an idea of the influence of conditions/treatment
 or batch effects within the data. The mdsplot() function will generate a
 multi-dimensional scaling (MDS) plot on median expression values for
-each channel. MDS plots represent an unsupervised way to indicate
-similarities between samples at a global level before more in depth
-analysis. In the example here we can see that there is no observable
-high-level difference between the two GvHD condition samples, however
-there does appear to be a weak separation between samples collected at
-D30 and D90 post BMT. Here and throughout the pipeline, colkey can be
-used to specify plotting colors for graphing conditions.
+each channel using the
+[limma](https://bioconductor.org/packages/release/bioc/html/limma.html)
+bioconductor package. MDS plots represent an unsupervised way to
+indicate similarities between samples at a global level before more in
+depth analysis. In the example here we can see that there is no
+observable high-level difference between the two GvHD condition samples,
+however there does appear to be a weak separation between samples
+collected at D30 and D90 post BMT. Here and throughout the pipeline,
+colkey can be used to specify plotting colors for graphing conditions.
 
 ``` r
 mds1 = mdsplot(sce_gvhd, 
@@ -411,7 +418,7 @@ plot_grid(exp_plot_umap, exp_plot_tsne,
 immunoCluster provides several wrapper functions to perform unsupervised
 clustering on your data. Currently users can implement either
 Rphenograph or FlowSOM with consensus clustering. Here we have used an
-ensemble method of FlowSOM and ConsensusCLusterPlus, which allows us to
+ensemble method of FlowSOM and ConsensusClusterPlus, which allows us to
 perform a scalable clustering on our dataset. We perform the clustering
 on all cells using a selection of lineage markers, with a final desired
 cluster number of up to 10, specified by the parameter k. FlowSOM will
@@ -420,6 +427,15 @@ and som\_y) and these will be clustered into 2-k clusters and all of
 these clustering results are saved as metadata in the SCE object.
 
 ``` r
+# Install Rphenograph from github
+# devtools::install_github("JinmiaoChenLab/Rphenograph")
+
+# Run phenograph clustering
+sce_gvhd = runPhenograph(sce_gvhd, k = 10, markers = clustering_markers)
+```
+
+``` r
+# Run FlowSOM and Consusus cluster plus method
 sce_gvhd = runFlowSOM(sce_gvhd, k = 10, markers = clustering_markers, som_x = 10, som_y = 10)
 ```
 
@@ -582,7 +598,7 @@ plot_grid(cell_annotation, annotated_abundance,
 <img src="README_files/figure-gfm/merge clusters-1.png" style="display: block; margin: auto;" />
 
 The plotAbundance() function can be used to create bar plots by
-specifying graph\_type = “bar”. Specifying a metadata feature will split
+specifying graph\_type = “bar.” Specifying a metadata feature will split
 the data by this feature will create another level of comparison, first
 by plotting abundance by sample as a stacked bar and then arranging the
 samples by GvHD condition.
@@ -782,7 +798,7 @@ pd_expression = markerExpressionPerSample(sce_gvhd,
     feature = 'condition',
     clusterAssign = 'cell_annotation',
     markers = activation_markers[3:5],
-    colkey = c('royalblue', 'red2'),
+    colkey = c(None = 'royalblue', GvHD = 'red2'),
     title = '',
     stripLabSize = 12,
     axisLabSize = 10,
@@ -800,18 +816,20 @@ plot_grid(gg_volcano, pd_expression,
 
 # Subsetting the SCE object
 
-It is possible to subset the SCE object for further clustering, for
-instance, in a situation when increased cluster resolution is desired or
-where you want to display the proportion of a certain cluster as a
-percentage of another parent populations, for instance CD4+ Tregs as a
-proportion of all CD4+ T cells. Subsetting can be performed using the
-subset\_sce\_metadata() function. The function can subset the SCE cells
-on any specified metadata slot using using conditional statements and a
-couple of examples are presented below:
+It is possible to subset the sce\_gvhd object for further clustering,
+for instance, in a situation when increased cluster resolution is
+desired or where you want to display the proportion of a certain cluster
+as a percentage of another parent populations, for instance CD4+ Tregs
+as a proportion of all CD4+ T cells. Subsetting can be performed using
+the subset\_sce\_metadata() function. The function can subset the
+sce\_gvhd cells on any specified metadata slot using using conditional
+statements and a couple of examples are presented below:
 
 ``` r
 # Subset by patient_ID
 sce_subset = subset_sce_metadata(sce_gvhd, patient_id %in% c("P1", "P9", "P15"))
+# Subset by clustering identity
+sce_cd4 = subset_sce_metadata(sce_gvhd, cell_annotation %in% c("CD4+ T Cells", "Basophils"))
 
 table(sce_subset@metadata$patient_id)
 ```
@@ -821,9 +839,6 @@ table(sce_subset@metadata$patient_id)
     ## 156422 131263  98571
 
 ``` r
-# Subset by clustering identity
-sce_cd4 = subset_sce_metadata(sce_gvhd, cell_annotation %in% c("CD4+ T Cells", "Basophils"))
-
 table(sce_cd4@metadata$cell_annotation)
 ```
 
@@ -926,3 +941,92 @@ sessionInfo()
 For any queries relating to software:
 
 -   Jessica Timms (<jessica.timms@kcl.ac.uk>)
+
+# References
+
+<div id="refs" class="references csl-bib-body hanging-indent">
+
+<div id="ref-amezquita_2019_orchestrating" class="csl-entry">
+
+Amezquita, Robert A., Aaron T. L. Lun, Etienne Becht, Vince J. Carey,
+Lindsay N. Carpp, Ludwig Geistlinger, Federico Marini, et al. 2019.
+“Orchestrating Single-Cell Analysis with Bioconductor.” *Nature Methods*
+17 (December). <https://doi.org/10.1038/s41592-019-0654-x>.
+
+</div>
+
+<div id="ref-blighe_2021_scdataviz" class="csl-entry">
+
+Blighe, Kevin. 2021. “scDataviz: scDataviz: Single Cell Dataviz and
+Downstream Analyses.” Bioconductor.
+<https://bioconductor.org/packages/release/bioc/html/scDataviz.html>.
+
+</div>
+
+<div id="ref-crowell_2020_catalyst" class="csl-entry">
+
+Crowell, Helena L., Vito R. T. Zanotelli, Stéphane Chevrier, Mark D.
+Robinson, and Bernd Bodenmiller. 2020. “CATALYST: Cytometry dATa
+anALYSis Tools.” Bioconductor.
+<https://bioconductor.org/packages/3.10/bioc/html/CATALYST.html>.
+
+</div>
+
+<div id="ref-hartmann_2019_comprehensive" class="csl-entry">
+
+Hartmann, Felix J., Joel Babdor, Pier Federico Gherardini, El-Ad D.
+Amir, Kyle Jones, Bita Sahaf, Diana M. Marquez, et al. 2019.
+“Comprehensive Immune Monitoring of Clinical Trials to Advance Human
+Immunotherapy.” *Cell Reports* 28 (July): 819–831.e4.
+<https://doi.org/10.1016/j.celrep.2019.06.049>.
+
+</div>
+
+<div id="ref-lun_2017_testing" class="csl-entry">
+
+Lun, Aaron T. L., Arianne C. Richard, and John C. Marioni. 2017.
+“Testing for Differential Abundance in Mass Cytometry Data.” *Nature
+Methods* 14 (July): 707–9. <https://doi.org/10.1038/nmeth.4295>.
+
+</div>
+
+<div id="ref-nowicka_2019_cytof" class="csl-entry">
+
+Nowicka, Malgorzata, Carsten Krieg, Helena L. Crowell, Lukas M. Weber,
+Felix J. Hartmann, Silvia Guglietta, Burkhard Becher, Mitchell P.
+Levesque, and Mark D. Robinson. 2019. “CyTOF Workflow: Differential
+Discovery in High-Throughput High-Dimensional Cytometry Datasets.”
+*F1000Research* 6 (December): 748.
+<https://doi.org/10.12688/f1000research.11622.4>.
+
+</div>
+
+<div id="ref-opzoomer_2021_immunocluster" class="csl-entry">
+
+Opzoomer, James W, Jessica A Timms, Kevin Blighe, Thanos P Mourikis,
+Nicolas Chapuis, Richard Bekoe, Sedigeh Kareemaghay, et al. 2021.
+“ImmunoCluster Provides a Computational Framework for the Non-Specialist
+to Profile High- Dimensional Cytometry Data.” *eLife* 10 (April):
+e62915. <https://doi.org/10.7554/eLife.62915>.
+
+</div>
+
+<div id="ref-weber_2019_diffcyt" class="csl-entry">
+
+Weber, Lukas M., Malgorzata Nowicka, Charlotte Soneson, and Mark D.
+Robinson. 2019. “Diffcyt: Differential Discovery in High-Dimensional
+Cytometry via High-Resolution Clustering.” *Communications Biology* 2
+(May): 1–11. <https://doi.org/10.1038/s42003-019-0415-5>.
+
+</div>
+
+<div id="ref-weber_2016_comparison" class="csl-entry">
+
+Weber, Lukas M., and Mark D. Robinson. 2016. “Comparison of Clustering
+Methods for High-Dimensional Single-Cell Flow and Mass Cytometry Data.”
+*Cytometry Part A* 89 (December): 1084–96.
+<https://doi.org/10.1002/cyto.a.23030>.
+
+</div>
+
+</div>

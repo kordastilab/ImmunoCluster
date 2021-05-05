@@ -3,6 +3,8 @@ title: "immunoCluster"
 author: "James Opzoomer, Kevin Blighe, Jessica Timms"
 date: "`r Sys.Date()`"
 package: "`r packageVersion('immunoCluster')`"
+bibliography: readme_bib.bib
+nocite: '@*'
 output:
   github_document:
     toc: true
@@ -13,11 +15,11 @@ always_allow_html: true
 
 ## 1. Introduction to immunoCluster
 
-The immunoCluster package uses the [scDataViz bioconductor package's](https://bioconductor.org/packages/devel/bioc/vignettes/scDataviz/inst/doc/scDataviz.html) vizualization tools and adaptation of the [SingleCellExperiment](https://www.bioconductor.org/packages/release/bioc/vignettes/SingleCellExperiment/inst/doc/intro.html) data structure to build simple and flexible cytometry analysis workflows like those outlined in Nowicka et al. (2017) [CyTOF workflow: differential discovery in high-throughput high-dimensional cytometry datasets](https://f1000research.com/articles/6-748). 
+The immunoCluster package uses the [scDataViz bioconductor package's](https://bioconductor.org/packages/devel/bioc/vignettes/scDataviz/inst/doc/scDataviz.html) vizualization tools and adaptation of the [SingleCellExperiment](https://www.bioconductor.org/packages/release/bioc/vignettes/SingleCellExperiment/inst/doc/intro.html) data structure to generate simple and flexible cytometry analysis workflows, building on the framework originally outlined in Nowicka et al. [CyTOF workflow: differential discovery in high-throughput high-dimensional cytometry datasets](https://f1000research.com/articles/6-748), which is also extended to build cytometry analysis pipelines in the [CATALYST](https://www.bioconductor.org/packages/release/bioc/html/CATALYST.html) bioconductor package. 
 
-The package provides a broad toolkit to carry out immune profiling from both liquid and imaging high-dimensional mass (CyTOF) and flow cytometry data. immunoCluster features standardized data infrastructure, making use of the SingleCellExperiment class object, scDataViz interactive visualization tools along with convenient implementations for popular dimensionality reduction and clustering algorithms designed for a non-specialist. To learn using immunoCluster we have provided a walkthrough below exploring some of the package's basic functionality on a published dataset.  
+The immunoCluster package provides a broad toolkit to carry out immune profiling from both liquid and imaging high-dimensional mass (CyTOF) and flow cytometry data. immunoCluster features standardized data infrastructure, making use of the SingleCellExperiment class object, scDataViz interactive visualization tools along with convenient implementations for popular dimensionality reduction and clustering algorithms designed for a non-specialist. To learn using immunoCluster we have provided a walkthrough below exploring some of the package's basic functionality on a published dataset.  
 
-An in depth report of immunoCluster's use to create liquid and imaging mass cytometry analysis pipelines, as well as its use for fluorescent flow cytometry analysis is outlined in our recent preprint [here](https://www.biorxiv.org/content/10.1101/2020.09.09.289033v1).  
+An in depth report of immunoCluster's use to create liquid and imaging mass cytometry analysis pipelines, as well as its use for fluorescent flow cytometry analysis is outlined in our recent paper in  [eLife here](https://elifesciences.org/articles/62915).  
 
 ## 2. Main functionalities of immunoCluster
 
@@ -172,7 +174,7 @@ sce_gvhd
 
 ## 2. Data Exploration
 
-We provide several functions to examine global patterns within the data, they can be used to get an idea of the influence of conditions/treatment or batch effects within the data. The mdsplot() function will generate a multi-dimensional scaling (MDS) plot on median expression values for each channel. MDS plots represent an unsupervised way to indicate similarities between samples at a global level before more in depth analysis. In the example here we can see that there is no observable high-level difference between the two GvHD condition samples, however there does appear to be a weak separation between samples collected at D30 and D90 post BMT. Here and throughout the pipeline, colkey can be used to specify plotting colors for graphing conditions. 
+We provide several functions to examine global patterns within the data, they can be used to get an idea of the influence of conditions/treatment or batch effects within the data. The mdsplot() function will generate a multi-dimensional scaling (MDS) plot on median expression values for each channel using the [limma](https://bioconductor.org/packages/release/bioc/html/limma.html) bioconductor package. MDS plots represent an unsupervised way to indicate similarities between samples at a global level before more in depth analysis. In the example here we can see that there is no observable high-level difference between the two GvHD condition samples, however there does appear to be a weak separation between samples collected at D30 and D90 post BMT. Here and throughout the pipeline, colkey can be used to specify plotting colors for graphing conditions. 
 
 ```{r mds_plot, fig.width=11, fig.height=3.75, eval=TRUE}
 mds1 = mdsplot(sce_gvhd, 
@@ -251,15 +253,28 @@ plot_grid(exp_plot_umap, exp_plot_tsne,
     nrow = 2, align = "l", label_size = 24)
 ```
 
-immunoCluster provides several wrapper functions to perform unsupervised clustering on your data. Currently users can implement either Rphenograph or FlowSOM with consensus clustering. Here we have used an ensemble method of FlowSOM and ConsensusCLusterPlus, which allows us to perform a scalable clustering on our dataset. We perform the clustering on all cells using a selection of lineage markers, with a final desired cluster number of up to 10, specified by the parameter k. FlowSOM will cluster cells into 100 SOM codes defined by the (dimensions of som_x and som_y) and these will be clustered into 2-k clusters and all of these clustering results are saved as metadata in the SCE object. 
+immunoCluster provides several wrapper functions to perform unsupervised clustering on your data. Currently users can implement either Rphenograph or FlowSOM with consensus clustering. Here we have used an ensemble method of FlowSOM and ConsensusClusterPlus, which allows us to perform a scalable clustering on our dataset. We perform the clustering on all cells using a selection of lineage markers, with a final desired cluster number of up to 10, specified by the parameter k. FlowSOM will cluster cells into 100 SOM codes defined by the (dimensions of som_x and som_y) and these will be clustered into 2-k clusters and all of these clustering results are saved as metadata in the SCE object. 
 
-```{r run clustering, message=TRUE, eval=TRUE}
+```{r run clustering_1, message=FALSE, eval=FALSE}
+# Install Rphenograph from github
+# devtools::install_github("JinmiaoChenLab/Rphenograph")
+
+# Run phenograph clustering
+sce_gvhd = runPhenograph(sce_gvhd, k = 10, markers = clustering_markers)
+
+```
+
+```{r run clustering_2, message=TRUE, eval=TRUE}
+
+# Run FlowSOM and Consusus cluster plus method
 sce_gvhd = runFlowSOM(sce_gvhd, k = 10, markers = clustering_markers, som_x = 10, som_y = 10)
+
 ```
 
 The clustering identities are stored in the metadata dataframe. The per cell membership of the 100 SOM codes is stored under som_codes and the respective clusterings are stored under flowsom_cc_k(k=n). We can vizualise the clustering or any other metatdata on the dimensionality plot using the function metadataPlot() (which maps to UMAP by default but can specify other dimension reductions that are stored in the SCE, like tSNE). We can also vizualise the abundance of each cluster as a proportion of total cells per sample using the plotAbundance() function. 
 
 ```{r viz flowSOM, fig.width=12, fig.height=6, eval=TRUE}
+
 # Plot UMAP with flowsom k=10 clustering overlay
 fsom_k10 = metadataPlot(sce_gvhd,
     colby = 'flowsom_cc_k10',
@@ -497,7 +512,7 @@ pd_expression = markerExpressionPerSample(sce_gvhd,
     feature = 'condition',
     clusterAssign = 'cell_annotation',
     markers = activation_markers[3:5],
-    colkey = c('royalblue', 'red2'),
+    colkey = c(None = 'royalblue', GvHD = 'red2'),
     title = '',
     stripLabSize = 12,
     axisLabSize = 10,
@@ -514,22 +529,18 @@ plot_grid(gg_volcano, pd_expression,
 
 # Subsetting the SCE object
 
-It is possible to subset the SCE object for further clustering, for instance, in a situation when increased cluster resolution is desired or where you want to display the proportion of a certain cluster as a percentage of another parent populations, for instance CD4+ Tregs as a proportion of all CD4+ T cells. Subsetting can be performed using the subset_sce_metadata() function. The function can subset the SCE cells on any specified metadata slot using using conditional statements and a couple of examples are presented below:
+It is possible to subset the sce_gvhd object for further clustering, for instance, in a situation when increased cluster resolution is desired or where you want to display the proportion of a certain cluster as a percentage of another parent populations, for instance CD4+ Tregs as a proportion of all CD4+ T cells. Subsetting can be performed using the subset_sce_metadata() function. The function can subset the sce_gvhd cells on any specified metadata slot using using conditional statements and a couple of examples are presented below:
 
 ```{r subsetting_1}
 # Subset by patient_ID
 sce_subset = subset_sce_metadata(sce_gvhd, patient_id %in% c("P1", "P9", "P15"))
-
-table(sce_subset@metadata$patient_id)
-```
-
-```{r subsetting_2}
 # Subset by clustering identity
 sce_cd4 = subset_sce_metadata(sce_gvhd, cell_annotation %in% c("CD4+ T Cells", "Basophils"))
 
+table(sce_subset@metadata$patient_id)
 table(sce_cd4@metadata$cell_annotation)
-```
 
+```
 
 # Session info
 ```{r session info, eval=TRUE}
@@ -541,3 +552,5 @@ sessionInfo()
 For any queries relating to software:
 
 * Jessica Timms (jessica.timms@kcl.ac.uk)
+
+# References
