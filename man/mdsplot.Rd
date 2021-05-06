@@ -15,7 +15,6 @@ mdsplot(
   legendIconSize = 5,
   xlim = NULL,
   ylim = NULL,
-  celllab = NULL,
   labSize = 3,
   labhjust = 1.5,
   labvjust = 0,
@@ -72,6 +71,36 @@ slot to group the individual samples by.}
 \item{xlim}{\code{ggplot2} x limit specification}
 
 \item{ylim}{\code{ggplot2} y limit specification}
+
+\item{xlabAngle}{specify the x lab angle}
+
+\item{xlabhjust}{Specify the horizontal justification of the x axis (0 = left jsutified, 1 = right justified)}
+
+\item{xlabvjust}{Specify the vertical justification of the x axis (0 = left jsutified, 1 = right justified)}
+
+\item{ylab}{specify the y axis label}
+
+\item{ylabAngle}{specify the y lab angle}
+
+\item{ylabhjust}{Specify the horizontal justification of the y axis (0 = left jsutified, 1 = right justified)}
+
+\item{ylabvjust}{Specify the vertical justification of the y axis (0 = left jsutified, 1 = right justified)}
+
+\item{axisLabSize}{specify the axis label size}
+
+\item{title}{specify the title text of the plot}
+
+\item{subtitle}{specify the subtitle text of the plot}
+
+\item{caption}{specify the caption text of the plot}
+
+\item{titleLabSize}{specify the title text size}
+
+\item{subtitleLabSize}{specify the subtitle text size}
+
+\item{captionLabSize}{specify the caption text size}
+
+\item{stripLabSize}{specify the facet labels of a plot}
 }
 \value{
 a \code{ggplot} object.
@@ -89,5 +118,5 @@ mdsplot(sce_gvhd, feature = "condition", colkey = c(None = 'royalblue', GvHD = '
 
 }
 \author{
-James Opzoomer \email{james.opzoomer@kcl.ac.uk}
+James Opzoomer
 }

@@ -15,8 +15,24 @@
 #' @param legendIconSize \code{ggplot2} legend icon size
 #' @param xlim \code{ggplot2} x limit specification
 #' @param ylim \code{ggplot2} y limit specification
+#' @param xlabAngle specify the x lab angle
+#' @param xlabhjust Specify the horizontal justification of the x axis (0 = left jsutified, 1 = right justified)
+#' @param xlabvjust Specify the vertical justification of the x axis (0 = left jsutified, 1 = right justified)
+#' @param ylab specify the y axis label
+#' @param ylabAngle specify the y lab angle
+#' @param ylabAngle specify the y lab angle
+#' @param ylabhjust Specify the horizontal justification of the y axis (0 = left jsutified, 1 = right justified)
+#' @param ylabvjust Specify the vertical justification of the y axis (0 = left jsutified, 1 = right justified)
+#' @param axisLabSize specify the axis label size
+#' @param stripLabSize specify the facet labels of a plot
+#' @param title specify the title text of the plot
+#' @param subtitle specify the subtitle text of the plot
+#' @param caption specify the caption text of the plot
+#' @param titleLabSize specify the title text size
+#' @param subtitleLabSize specify the subtitle text size
+#' @param captionLabSize specify the caption text size
 #'
-#' @author James Opzoomer \email{james.opzoomer@kcl.ac.uk}
+#' @author James Opzoomer
 #'
 #' @return a \code{ggplot} object.
 #'
@@ -30,6 +46,7 @@
 #' @import ggplot2
 #' @importFrom ggrepel geom_label_repel
 #' @importFrom limma plotMDS
+#'
 #' @export
 
 mdsplot <- function(
@@ -43,7 +60,6 @@ mdsplot <- function(
   legendIconSize = 5.0,
   xlim = NULL,
   ylim = NULL,
-  celllab = NULL,
   labSize = 3.0,
   labhjust = 1.5,
   labvjust = 0,
@@ -80,6 +96,11 @@ mdsplot <- function(
   )
   {
 
+  if (is(data, 'SingleCellExperiment')) {
+    message('--input data class is SingleCellExperiment')
+  } else {
+    message('--input data class is ', class(data))
+  }
 
   # create a base theme that will later be modified
   th <- theme_bw(base_size=24) +
@@ -114,6 +135,8 @@ mdsplot <- function(
 
   }
 
+  message('--Generating MDS plot from: ', markers)
+
   # Get the median marker expression per sample without normalization
   # add marker selection later
   data.median = data.frame(sample_id = data@metadata[,grouping], t(assay(data))[,markers]) %>%
@@ -145,7 +168,7 @@ mdsplot <- function(
 
     # sort out custom colour pairing,
     if (!is.null(colkey)) {
-      mds <- mds + scale_colour_discrete('') +
+      mds = mds + scale_colour_discrete('') +
         scale_color_manual(values = colkey)
     }
 
