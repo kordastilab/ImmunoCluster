@@ -1,7 +1,7 @@
 immunoCluster
 ================
 James Opzoomer, Kevin Blighe, Jessica Timms
-2021-05-05
+2021-05-06
 
 -   [1. Introduction to immunoCluster](#1-introduction-to-immunocluster)
 -   [2. Main functionalities of
@@ -62,7 +62,8 @@ here](https://elifesciences.org/articles/62915).
 
 The basic pipeline of immunoCluster analysis involves:
 
--   Creating file and marker labels to generate the experimental design
+-   Creating file/sample labels and marker/panel labels to generate the
+    experimental design and metadata
 
 -   Importing .fcs data into the SingleCellExperiment object
 
@@ -145,12 +146,13 @@ download the SingleCellExperiment object directly into memory and skip
 the import process just below. The fcs files can be downloaded from this
 [download\_link](https://zenodo.org/record/3801882/files/fcs_data.zip?download=1).
 
-The experimental design informs the metadata we will need to incorporate
-into the SingleCellExperiment (SCE) object, here we have created one
-table (from an excel file), that contains five columns, and one row for
-each .fcs file. We will include the .fcs filename, the GvHD “condition”
-of the patient, patient\_id, a unique sample\_id, and the day\_id
-representing the day following BMT that the sample was taken.
+The experimental design is used to generate the eperimental metadata
+will label each cell and is incorporated into the SingleCellExperiment
+(SCE) object, here we have created one table (from an excel file), that
+contains five columns, and one row for each .fcs file. We will include
+the .fcs filename, the GvHD “condition” of the patient, patient\_id, a
+unique sample\_id, and the day\_id representing the day following BMT
+that the sample was taken.
 [Download\_link](https://zenodo.org/record/3801882/files/sample_metadata.xlsx?download=1)
 
 ``` r
@@ -378,6 +380,27 @@ previously generated UMAP. The dimensionality reduction slot to use is
 specified with the reducedDim parameter. The markers and several ggplot
 style plotting parameters can be specified resulting in tiled plots of
 the UMAP with marker expression as colour.
+
+``` r
+umap_density = density_plot(sce_gvhd, reducedDim = "UMAP", title = "UMAP density plot")
+
+umap_sample = metadataPlot(sce_gvhd,
+    colby = 'group',
+    title = 'UMAP coloured by sample ID',
+    reducedDim = 'UMAP',
+    legendPosition = 'right',
+    legendLabSize = 8,
+    axisLabSize = 10,
+    titleLabSize = 10,
+    subtitleLabSize = 1,
+    captionLabSize = 16)
+
+plot_grid(umap_density, umap_sample,
+    labels = c('A','B'),
+    nrow = 1, align = "l", label_size = 24)
+```
+
+<img src="README_files/figure-gfm/density plot-1.png" style="display: block; margin: auto;" />
 
 ``` r
 expression_markers =  c('CD3', 'CD4', 'CD8a', 'CD11b', 'CD19', 'CD56')
@@ -884,8 +907,8 @@ sessionInfo()
     ##   [1] Rtsne_0.15                  colorspace_2.0-0           
     ##   [3] ellipsis_0.3.1              scuttle_1.0.4              
     ##   [5] bluster_1.0.0               cytolib_2.2.1              
-    ##   [7] XVector_0.30.0              base64enc_0.1-3            
-    ##   [9] BiocNeighbors_1.8.2         rstudioapi_0.13            
+    ##   [7] XVector_0.30.0              BiocNeighbors_1.8.2        
+    ##   [9] base64enc_0.1-3             rstudioapi_0.13            
     ##  [11] farver_2.1.0                hexbin_1.28.2              
     ##  [13] CytoML_2.2.2                RSpectra_0.16-0            
     ##  [15] fansi_0.4.2                 xml2_1.3.2                 
@@ -909,32 +932,33 @@ sessionInfo()
     ##  [51] irlba_2.3.3                 lifecycle_1.0.0            
     ##  [53] statmod_1.4.35              XML_3.99-0.6               
     ##  [55] edgeR_3.32.1                zlibbioc_1.36.0            
-    ##  [57] scales_1.1.1                RProtoBufLib_2.2.0         
-    ##  [59] RBGL_1.66.0                 yaml_2.2.1                 
-    ##  [61] curl_4.3                    aws.signature_0.6.0        
-    ##  [63] reticulate_1.19             gridExtra_2.3              
-    ##  [65] latticeExtra_0.6-29         stringi_1.5.3              
-    ##  [67] highr_0.8                   Rphenograph_0.99.1         
-    ##  [69] flowCore_2.2.0              BiocParallel_1.24.1        
-    ##  [71] rlang_0.4.10                pkgconfig_2.0.3            
-    ##  [73] systemfonts_1.0.1           bitops_1.0-6               
-    ##  [75] evaluate_0.14               lattice_0.20-41            
-    ##  [77] purrr_0.3.4                 labeling_0.4.2             
-    ##  [79] tidyselect_1.1.0            plyr_1.8.6                 
-    ##  [81] magrittr_2.0.1              R6_2.5.0                   
-    ##  [83] generics_0.1.0              DelayedArray_0.16.3        
-    ##  [85] DBI_1.1.1                   pillar_1.6.0               
-    ##  [87] withr_2.4.2                 RCurl_1.98-1.3             
-    ##  [89] FlowSOM_1.22.0              tsne_0.1-3                 
-    ##  [91] crayon_1.4.1                utf8_1.2.1                 
-    ##  [93] rmarkdown_2.7               aws.s3_0.3.21              
-    ##  [95] jpeg_0.1-8.1                locfit_1.5-9.4             
-    ##  [97] grid_4.0.4                  data.table_1.14.0          
-    ##  [99] Rgraphviz_2.34.0            ConsensusClusterPlus_1.54.0
-    ## [101] digest_0.6.27               webshot_0.5.2              
-    ## [103] tidyr_1.1.3                 openssl_1.4.3              
-    ## [105] RcppParallel_5.1.2          munsell_0.5.0              
-    ## [107] viridisLite_0.4.0           askpass_1.1
+    ##  [57] MASS_7.3-53.1               scales_1.1.1               
+    ##  [59] RProtoBufLib_2.2.0          RBGL_1.66.0                
+    ##  [61] yaml_2.2.1                  curl_4.3                   
+    ##  [63] aws.signature_0.6.0         reticulate_1.19            
+    ##  [65] gridExtra_2.3               latticeExtra_0.6-29        
+    ##  [67] stringi_1.5.3               highr_0.8                  
+    ##  [69] Rphenograph_0.99.1          flowCore_2.2.0             
+    ##  [71] BiocParallel_1.24.1         rlang_0.4.10               
+    ##  [73] pkgconfig_2.0.3             systemfonts_1.0.1          
+    ##  [75] bitops_1.0-6                evaluate_0.14              
+    ##  [77] lattice_0.20-41             purrr_0.3.4                
+    ##  [79] labeling_0.4.2              tidyselect_1.1.0           
+    ##  [81] plyr_1.8.6                  magrittr_2.0.1             
+    ##  [83] R6_2.5.0                    generics_0.1.0             
+    ##  [85] DelayedArray_0.16.3         DBI_1.1.1                  
+    ##  [87] pillar_1.6.0                withr_2.4.2                
+    ##  [89] RCurl_1.98-1.3              FlowSOM_1.22.0             
+    ##  [91] tsne_0.1-3                  crayon_1.4.1               
+    ##  [93] utf8_1.2.1                  rmarkdown_2.7              
+    ##  [95] aws.s3_0.3.21               jpeg_0.1-8.1               
+    ##  [97] locfit_1.5-9.4              grid_4.0.4                 
+    ##  [99] isoband_0.2.4               data.table_1.14.0          
+    ## [101] Rgraphviz_2.34.0            ConsensusClusterPlus_1.54.0
+    ## [103] digest_0.6.27               webshot_0.5.2              
+    ## [105] tidyr_1.1.3                 openssl_1.4.3              
+    ## [107] RcppParallel_5.1.2          munsell_0.5.0              
+    ## [109] viridisLite_0.4.0           askpass_1.1
 
 # Contact
 

@@ -25,7 +25,7 @@ An in depth report of immunoCluster's use to create liquid and imaging mass cyto
 
 The basic pipeline of immunoCluster analysis involves:
 
-* Creating file and marker labels to generate the experimental design
+* Creating file/sample labels and marker/panel labels to generate the experimental design and metadata
 
 * Importing .fcs data into the SingleCellExperiment object
 
@@ -90,7 +90,7 @@ All the data required can be downloaded from Zenodo. [![DOI](https://zenodo.org/
 
 You can download all the .fcs files from zenodo [here](https://doi.org/10.5281/zenodo.3801882), or alternatively you can download the SingleCellExperiment object directly into memory and skip the import process just below. The fcs files can be downloaded from this [download_link](https://zenodo.org/record/3801882/files/fcs_data.zip?download=1).
 
-The experimental design informs the metadata we will need to incorporate into the SingleCellExperiment (SCE) object, here we have created one table (from an excel file), that contains five columns, and one row for each .fcs file. We will include the .fcs filename, the GvHD "condition" of the patient,  patient_id, a unique sample_id, and the day_id representing the day following BMT that the sample was taken. [Download_link](https://zenodo.org/record/3801882/files/sample_metadata.xlsx?download=1)
+The experimental design is used to generate the eperimental metadata will label each cell and is incorporated into the SingleCellExperiment (SCE) object, here we have created one table (from an excel file), that contains five columns, and one row for each .fcs file. We will include the .fcs filename, the GvHD "condition" of the patient,  patient_id, a unique sample_id, and the day_id representing the day following BMT that the sample was taken. [Download_link](https://zenodo.org/record/3801882/files/sample_metadata.xlsx?download=1)
 
 ```{r sample setup, eval=TRUE}
 
@@ -218,6 +218,27 @@ sce_gvhd
 ```
 
 The markerExpression() function will allow us to view the UMAP dimensionality reductions, overlaying marker expression of our major immune subpopulation lineage markers as an exploratory analysis of the previously generated UMAP. The dimensionality reduction slot to use is specified with the reducedDim parameter. The markers and several ggplot style plotting parameters can be specified resulting in tiled plots of the UMAP with marker expression as colour. 
+
+```{r density plot, fig.width=18, fig.height=10, eval=TRUE}
+
+umap_density = density_plot(sce_gvhd, reducedDim = "UMAP", title = "UMAP density plot")
+
+umap_sample = metadataPlot(sce_gvhd,
+    colby = 'group',
+    title = 'UMAP coloured by sample ID',
+    reducedDim = 'UMAP',
+    legendPosition = 'right',
+    legendLabSize = 8,
+    axisLabSize = 10,
+    titleLabSize = 10,
+    subtitleLabSize = 1,
+    captionLabSize = 16)
+
+plot_grid(umap_density, umap_sample,
+    labels = c('A','B'),
+    nrow = 1, align = "l", label_size = 24)
+
+```
 
 ```{r, fig.width=18, fig.height=10, eval=TRUE}
 expression_markers =  c('CD3', 'CD4', 'CD8a', 'CD11b', 'CD19', 'CD56')
