@@ -1,3 +1,37 @@
+#' @title Create a ggplot object of sce cluster proportion abundances grouped by sample and metadata condition
+#'
+#' @param indata A \code{\link[SingleCellExperiment]{SingleCellExperiment}}
+#' @param graph_type Whether to create a boxplot with 'box' or stacked barchart with 'bar'
+#' @param group The metadata slot representing sample_id
+#' @param clusters The specific clusters to plot within the clustering metatdata slot
+#' @param clusterAssign the clustering metadata or other metadata slot by which to group the samples specified in 'group'
+#' @param feature A feature representing a metadata slot by which to split the plots
+#' @param colkey A colour key by which to manually specify plotting colours
+#' @param legendPosition Where to position the legend
+#' @param pointSize Dotplot pointsize
+#' @param legendLabSize legend label size
+#' @param legendIconSize legend key icon size
+#' @param legendKeyHeight legend key height
+#' @param xlim specify the x limit
+#' @param ylim specify the y limit
+#' @param xlab specify the x axis label
+#' @param xlabAngle specify the x lab angle
+#' @param xlabhjust Specify the horizontal justification of the x axis (0 = left jsutified, 1 = right justified)
+#' @param xlabvjust Specify the vertical justification of the x axis (0 = left jsutified, 1 = right justified)
+#' @param ylab specify the y axis label
+#' @param ylabAngle specify the y lab angle
+#' @param ylabAngle specify the y lab angle
+#' @param ylabhjust Specify the horizontal justification of the y axis (0 = left jsutified, 1 = right justified)
+#' @param ylabvjust Specify the vertical justification of the y axis (0 = left jsutified, 1 = right justified)
+#' @param axisLabSize specify the axis label size
+#' @param stripLabSize specify the facet labels of a plot
+#' @param title specify the title text of the plot
+#' @param subtitle specify the subtitle text of the plot
+#' @param caption specify the caption text of the plot
+#' @param titleLabSize specify the title text size
+#' @param subtitleLabSize specify the subtitle text size
+#' @param captionLabSize specify the caption text size
+#'
 #' @export
 plotAbundance = function(
   indata,
@@ -14,7 +48,6 @@ plotAbundance = function(
   legendKeyHeight = 2.5,
   xlim = NULL,
   ylim = NULL,
-  yfixed = FALSE,
   xlab = 'Population',
   xlabAngle = 90,
   xlabhjust = 0.5,
@@ -34,6 +67,12 @@ plotAbundance = function(
   borderWidth = 0.8,
   borderColour = 'black'
 ){
+
+  if (is(indata, 'SingleCellExperiment')) {
+    message('--input data class is SingleCellExperiment')
+  } else {
+    message('--input data class is ', class(indata))
+  }
 
   # create a base theme that will later be modified
   th <- theme_bw(base_size=24) +
@@ -69,16 +108,18 @@ plotAbundance = function(
       strip.text.x = element_text(size = stripLabSize,
                                   face = 'bold', margin = margin(b = 5, t = 5)))
 
-  ## Create the props table
-  counts_table <- table(indata@metadata[,clusterAssign], indata@metadata[,group])
+  # Create the sample-cluster counts table
+  counts_table = table(indata@metadata[,clusterAssign], indata@metadata[,group])
 
-  props_table <- t(t(counts_table) / colSums(counts_table)) * 100
+  # Create the proportion table from the counts table
+  props_table = t(t(counts_table) / colSums(counts_table)) * 100
 
   # Select the specified clusters
-  props <- as.data.frame.matrix(props_table)[clusters,]
+  props = as.data.frame.matrix(props_table)[clusters,]
 
-  plotobj <- melt(data.frame(cluster = rownames(props), props),
+  plotobj = melt(data.frame(cluster = rownames(props), props),
                id.vars = "cluster", value.name = "proportion", variable.name = "sample_id")
+
   plotobj$cluster <- factor(plotobj$cluster)
   plotobj$sample_id = gsub("X", "", plotobj$sample_id)
 
