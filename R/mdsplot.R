@@ -164,11 +164,11 @@ mdsplot <- function(
     # Plot
     mds = ggplot(mdsdf, aes_string(x = "MDS1", y = "MDS2", color = feature)) +
     geom_point(size = 2, alpha = 0.8) + th +
-    geom_label_repel(aes(label = sample_id))
+    geom_label_repel(aes(label = sample_id), show.legend = FALSE)
 
     # sort out custom colour pairing,
     if (!is.null(colkey)) {
-      mds = mds + scale_colour_discrete('') +
+      mds = mds +
         scale_color_manual(values = colkey)
     }
 
@@ -180,7 +180,7 @@ mdsplot <- function(
     # Plot
     mds = ggplot(mdsdf, aes(x = MDS1, y = MDS2)) +
         geom_point(size = 2, alpha = 0.8) + th +
-        geom_label_repel(aes(label = sample_id))
+        geom_label_repel(aes(label = sample_id), show.legend = FALSE)
 
     return(mds)
 
