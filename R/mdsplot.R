@@ -168,7 +168,7 @@ mdsplot <- function(
 
     # sort out custom colour pairing,
     if (!is.null(colkey)) {
-      mds = mds + scale_colour_discrete('') +
+      mds = mds +
         scale_color_manual(values = colkey)
     }
 
